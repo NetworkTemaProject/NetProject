@@ -56,7 +56,7 @@ void CheckGameOver();
 void SetCilentData(DWORD portnum);
 void FootHoldInit();
 void PlayerInit();
-bool IsReadytoPlay(bool isReady;
+bool IsReadytoPlay(bool isReady);
 DWORD WINAPI ProcessClient(LPVOID arg);
 
 
@@ -178,18 +178,17 @@ BOOL IsOkGameStart()
 	return 0;
 }
 
-Void RecTimer()
+void RecTimer()
 {
-	return Void();
 }
 
 void UpdateTimer()
 {
 }
 
-Float timeInterpolation()
+float timeInterpolation()
 {
-	return Float();
+	return 0;
 }
 
 void CreateMainGameScene()
@@ -226,9 +225,9 @@ void CheckGameOver()
 {
 }
 
-Void SetCilentData(DWORD portnum)
+void SetCilentData(DWORD portnum)
 {
-	return Void();
+
 }
 
 void FootHoldInit()
@@ -242,4 +241,9 @@ void PlayerInit()
 DWORD __stdcall ProcessClient(LPVOID arg)
 {
 	return 0;
+}
+
+bool IsReadytoPlay(bool isReady)
+{
+
 }
