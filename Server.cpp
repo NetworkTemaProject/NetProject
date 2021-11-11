@@ -7,6 +7,33 @@
 #define SERVERPORT 9000
 #define BUFSIZE 512
 
+int custom_counter();
+// vector<Foothold> Bottom;
+
+struct PlayerMgr
+{
+	DWORD portnum;
+	// CPlayer player;
+};
+
+clock_t serverInit_time;
+clock_t serverPre_time;
+clock_t serverDelta_time;
+
+bool IsCollisionPandF;
+bool IsCollisionP1andP2;
+
+bool IsNeedUpdateLoc;
+
+bool isPlayingGame;
+
+int portnum;
+
+bool Win;
+
+PlayerMgr Players[3];
+
+
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
 
@@ -29,7 +56,7 @@ void CheckGameOver();
 void SetCilentData(DWORD portnum);
 void FootHoldInit();
 void PlayerInit();
-Bool IsReadytoPlay(bool isReady;
+bool IsReadytoPlay(bool isReady;
 DWORD WINAPI ProcessClient(LPVOID arg);
 
 
