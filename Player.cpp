@@ -1,4 +1,4 @@
-#include "Robot.h"
+#include "Player.h"
 
 void Part::makePart(int type, bool leftPart)
 {
@@ -60,7 +60,7 @@ void Part::makePart(int type, bool leftPart)
 	}
 }
 
-Robot::Robot()
+CPlayer::CPlayer()
 {
 	head.makePart(1, true);
 	nose.makePart(2, true);
@@ -83,7 +83,7 @@ Robot::Robot()
 	Swing_r = glm::mat4(1.0f);
 }
 
-void Robot::Update()
+void CPlayer::Update()
 {
 	get_angle();
 	Fall();
@@ -94,7 +94,7 @@ void Robot::Update()
 	Locate();
 }
 
-void Robot::Locate()
+void CPlayer::Locate()
 {
 	Turn = glm::mat4(1.0f);
 	Move = glm::mat4(1.0f);
@@ -114,7 +114,7 @@ void Robot::Locate()
 	leg_r.TRS = Move * Turn * leg_r.T2 * Swing_l * leg_r.T1 * leg_r.S;
 }
 
-void Robot::Swing()
+void CPlayer::Swing()
 {
 	if (liftend) {
 		angle_swing -= 5.0f;
@@ -130,7 +130,7 @@ void Robot::Swing()
 	}
 }
 
-void Robot::Walk_anim()
+void CPlayer::Walk_anim()
 {
 	if (dx != 0 || dz != 0)
 		Swing();
@@ -141,7 +141,7 @@ void Robot::Walk_anim()
 	}
 }
 
-void Robot::Jump()
+void CPlayer::Jump()
 {     
 	if (fall == false) {
 		fall = true;
@@ -149,14 +149,14 @@ void Robot::Jump()
 	}
 }
 
-void Robot::Fall()
+void CPlayer::Fall()
 {
 	if(fall)
 		if (dy > -0.2)
 			dy -= 0.03;
 }
 
-void Robot::get_angle()
+void CPlayer::get_angle()
 {
 	if (dx == 0 && dz == 0)
 		return;

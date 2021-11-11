@@ -16,13 +16,16 @@ struct Part {
 	void makePart(int type, bool leftPart);
 };
 
-struct Robot {
+class CPlayer {
+
+public:
 	float angle_turn;
 	float x, y, z;
 	float dx, dy, dz;
 	float angle_swing;
 	bool liftend;
 	bool fall;
+	int m_nScore = 0;
 
 	Part head;
 	Part nose;
@@ -33,7 +36,8 @@ struct Robot {
 	glm::mat4 Move;
 	glm::mat4 Swing_l, Swing_r;
 
-	Robot();
+public:
+	CPlayer();
 
 	void Update();
 	void Locate();

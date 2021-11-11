@@ -2,7 +2,6 @@
 #pragma comment(lib,"ws2_32")
 #include <WinSock2.h>
 #include <iostream>
-#include <fstream>
 
 #define SERVERPORT 9000
 #define BUFSIZE 512
@@ -58,7 +57,6 @@ int main(int argc, char* argv[])
 	char buf[BUFSIZE + 1];
 	int len, fsize;
 	int cnt = 0;
-	ofstream out;
 
 	while (1) {
 		//accept()
@@ -79,7 +77,6 @@ int main(int argc, char* argv[])
 		if (retval == 0) break;
 
 		buf[retval] = '\0';
-		out.open(buf, ios::binary);
 
 		// 총 데이터 크기 받기
 		retval = recvn(client_sock, (char*)&fsize, sizeof(int), 0);
@@ -95,7 +92,6 @@ int main(int argc, char* argv[])
 			if (retval == 0) break;
 
 			buf[retval] = '\0';
-			out.write(buf, len);
 			
 			cnt += len;
 			cout << "전송중 - 전송률 " << (float)cnt/(float)fsize*100.0f <<"%" <<'\r'; 

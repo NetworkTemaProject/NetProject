@@ -1,8 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#pragma comment(lib,"ws2_32")
+#include <WinSock2.h>
 #include <cstdlib>
 #include "Foothold.h"
 #include"filetobuf.h"
-#include "Robot.h"
+#include "Player.h"
 #define pi 3.141592
 
 
@@ -22,7 +25,7 @@ void check_GameOver();
 void check_Bonus();
 
 void check_collide();
-bool collide_box(Foothold, Robot&);
+bool collide_box(Foothold, CPlayer&);
 void Time_score();
 
 void Init_Game();
@@ -55,8 +58,6 @@ clock_t past;
 clock_t present;
 clock_t start;
 bool game_over = false;
-
-using namespace std;
 
 GLfloat	box[][3] = {
 	{ -0.5, 0, 0.5 },
@@ -158,8 +159,50 @@ GLfloat	boxN[][3] = {
 };
 
 std::vector<Foothold> Bottom;
-Robot player;
+CPlayer player;
+///////////////////////////////////////////////////////////////////////////////////////
+#define CLINET_NUM 3
 
+struct InputData{
+	bool bUp;
+	bool bRight;
+	bool bLeft;
+	bool bDown;
+	bool bSpace;
+	bool bEnter;
+};
+
+struct PlayerMgr {
+	DWORD portnum;
+	CPlayer player;
+};
+
+struct SendPlayerData {
+	InputData Input;
+	clock_t ClientTime;
+};
+
+struct SendGameData {
+	PlayerMgr players;
+	clock_t ServerTime;
+	bool Win;
+	std::vector<Foothold> Bottom;
+};
+
+SendPlayerData myPlayer;
+PlayerMgr Players[CLINET_NUM];
+SOCKET sock;
+SOCKADDR_IN peeraddr;
+SOCKADDR_IN serveraddr;
+
+#define SERVERIP "127.0.0.1"
+#define SERVERPORT 9000
+
+void TimerFunc();
+void UpdateSendData();
+bool IsPlayingGame();
+
+/////////////////////////////////////////////////////////////////////////////////
 void init()
 {
 	glEnable(GL_DEPTH_TEST);
@@ -517,7 +560,7 @@ void check_collide()
 	}
 }
 
-bool collide_box(Foothold bottom, Robot& player)
+bool collide_box(Foothold bottom, CPlayer& player)
 {
 	float b_maxX, b_minX, p_maxX, p_minX;
 	float b_maxY, b_minY, p_maxY, p_minY;
@@ -575,4 +618,21 @@ void Init_Game()
 	player.Locate();
 
 	glutTimerFunc(50, Timerfunction, 1);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+void TimerFunc()
+{
+
+}
+
+void UpdateSendData()
+{
+
+}
+
+bool IsPlayingGame()
+{
+	return false;
 }
