@@ -183,14 +183,14 @@ struct SendPlayerData {
 };
 
 struct SendGameData {
-	PlayerMgr players;
+	PlayerMgr players[CLINET_NUM];
 	clock_t ServerTime;
 	bool Win;
 	std::vector<Foothold> Bottom;
 };
 
 SendPlayerData myPlayer;
-PlayerMgr Players[CLINET_NUM];
+PlayerMgr players[CLINET_NUM];
 SOCKET sock;
 SOCKADDR_IN peeraddr;
 SOCKADDR_IN serveraddr;
