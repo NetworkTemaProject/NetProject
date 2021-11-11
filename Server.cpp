@@ -2,9 +2,38 @@
 #pragma comment(lib,"ws2_32")
 #include <WinSock2.h>
 #include <iostream>
+#include <Player.h>
 
 #define SERVERPORT 9000
 #define BUFSIZE 512
+
+HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
+HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
+
+
+void ServerInit();
+BOOL IsOkGameStart();
+void RecTimer();
+void UpdateTimer();
+float timeInterpolation();
+void CreateMainGameScene();
+void CheckCollideFoothold();
+
+bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player);
+bool IsCollidePlayerByPlayer(CPlayer& a, CPlayer& b);
+
+void CheckCollidePlayers();
+void UpdatePlayerLocation();
+void UpdateClientKeyInput();
+void CheckGameOver();
+void SetCilentData(DWORD portnum);
+void FootHoldInit();
+void PlayerInit();
+Bool IsReadytoPlay(bool isReady;
+DWORD WINAPI ProcessClient(LPVOID arg);
+
+
+
 
 // 사용자 정의 데이터 수신 함수
 int recvn(SOCKET s, char* buf, int len, int flags)
@@ -109,5 +138,81 @@ int main(int argc, char* argv[])
 
 	// 윈속 종료
 	WSACleanup();
+	return 0;
+}
+
+void ServerInit()
+{
+
+}
+
+BOOL IsOkGameStart()
+{
+	return 0;
+}
+
+Void RecTimer()
+{
+	return Void();
+}
+
+void UpdateTimer()
+{
+}
+
+Float timeInterpolation()
+{
+	return Float();
+}
+
+void CreateMainGameScene()
+{
+}
+
+void CheckCollideFoothold()
+{
+}
+
+bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player)
+{
+	return false;
+}
+
+bool IsCollidePlayerByPlayer(CPlayer& a, CPlayer& b)
+{
+	return false;
+}
+
+void CheckCollidePlayers()
+{
+}
+
+void UpdatePlayerLocation()
+{
+}
+
+void UpdateClientKeyInput()
+{
+}
+
+void CheckGameOver()
+{
+}
+
+Void SetCilentData(DWORD portnum)
+{
+	return Void();
+}
+
+void FootHoldInit()
+{
+}
+
+void PlayerInit()
+{
+}
+
+DWORD __stdcall ProcessClient(LPVOID arg)
+{
 	return 0;
 }
