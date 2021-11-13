@@ -62,6 +62,33 @@ DWORD WINAPI ProcessClient(LPVOID arg);
 
 vector<Foothold> Bottom;
 
+// 소켓 함수 오류 출력 후 종료
+void err_quit(const char* msg)
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+	MessageBox(NULL, (LPCTSTR)lpMsgBuf, msg, MB_ICONERROR);
+	LocalFree(lpMsgBuf);
+	exit(1);
+}
+
+// 소켓 함수 오류 출력
+void err_display(const char* msg)
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+	printf("[%s] %s", msg, (char*)lpMsgBuf);
+	LocalFree(lpMsgBuf);
+}
+
 
 // 사용자 정의 데이터 수신 함수
 int recvn(SOCKET s, char* buf, int len, int flags)
@@ -116,52 +143,21 @@ int main(int argc, char* argv[])
 	int len, fsize;
 	int cnt = 0;
 
+	HANDLE hClientThread;
+
 	while (1)
 	{
 		//accept()
 		addrlen = sizeof(clientaddr);
 		client_sock = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
-		if (client_sock == INVALID_SOCKET) break;
+		if (client_sock == INVALID_SOCKET)
+			break;
 
 
-		// 접속한 클라이언트 정보 출력
-		cout << endl << "[TCP 서버] 클라이언트 접속: IP 주소=";
-		cout << inet_ntoa(clientaddr.sin_addr) << ",포트번호=" << ntohs(clientaddr.sin_port) << endl;
-
-		/* 클라이언트와 데이터 통신*/
-
-		// 데이터 받기 - filename
-		retval = recvn(client_sock, (char*)&len, sizeof(int), 0);
-		retval = recvn(client_sock, buf, len, 0);
-		if (retval == 0) break;
-
-		buf[retval] = '\0';
-
-		// 총 데이터 크기 받기
-		retval = recvn(client_sock, (char*)&fsize, sizeof(int), 0);
-		if (retval == 0 || retval > BUFSIZE) break;
-
-		cout << fixed;
-		cout.precision(1);
-
-		while (cnt < fsize)
-		{
-			// 분할된 데이터 받기
-			retval = recvn(client_sock, (char*)&len, sizeof(int), 0);
-			retval = recvn(client_sock, buf, len, 0);
-			if (retval == 0) break;
-
-			buf[retval] = '\0';
-
-			cnt += len;
-			cout << "전송중 - 전송률 " << (float)cnt / (float)fsize * 100.0f << "%" << '\r';
-		}
-		if (cnt >= fsize) cout << "전송완료";
+		
 
 		// closesocket()
 		closesocket(client_sock);
-		cout << endl << "[TCP 서버] 클라이언트 종료: IP 주소=";
-		cout << inet_ntoa(clientaddr.sin_addr) << ",포트번호=" << ntohs(clientaddr.sin_port) << endl;
 	}
 
 	// closesocket()
