@@ -6,15 +6,15 @@
 #include "Foothold.h"
 
 #define SERVERPORT 9000
-#define BUFSIZE 512
+#define CLIENT_NUM 3
 
-int custom_counter;
-// vector<Foothold> Bottom;
+static int custom_counter;
+vector<Foothold> Bottom;
 
 struct PlayerMgr
 {
 	DWORD portnum;
-	// CPlayer player;
+	CPlayer player;
 };
 
 clock_t serverInit_time;
@@ -32,7 +32,7 @@ int portnum;
 
 bool Win;
 
-PlayerMgr Players[3];
+PlayerMgr Players[CLIENT_NUM];
 
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
@@ -40,7 +40,7 @@ HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변�
 
 
 void ServerInit();
-BOOL IsOkGameStart();
+BOOL IsOkGameStart(int PlayerCount);
 void RecTimer();
 void UpdateTimer();
 float timeInterpolation();
@@ -59,8 +59,6 @@ void FootHoldInit();
 void PlayerInit();
 bool IsReadytoPlay(bool isReady);
 DWORD WINAPI ProcessClient(LPVOID arg);
-
-vector<Foothold> Bottom;
 
 // 소켓 함수 오류 출력 후 종료
 void err_quit(const char* msg)
@@ -123,6 +121,7 @@ int main(int argc, char* argv[])
 
 	// socket()
 	SOCKET listen_sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (listen_sock == INVALID_SOCKET) err_quit("socket()");
 
 	// bind()
 	SOCKADDR_IN serveraddr;
@@ -131,19 +130,18 @@ int main(int argc, char* argv[])
 	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serveraddr.sin_port = htons(SERVERPORT);
 	retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
+	if (retval == SOCKET_ERROR) err_quit("bind()");
 
 	// listen()
 	retval = listen(listen_sock, SOMAXCONN);
+	if (retval == SOCKET_ERROR) err_quit("listen()");
 
 	// 데이터 통신에 사용할 변수
 	SOCKET client_sock;
 	SOCKADDR_IN clientaddr;
 	int addrlen;
-	char buf[BUFSIZE + 1];
-	int len, fsize;
-	int cnt = 0;
 
-	HANDLE hClientThread;
+	HANDLE hClientThread = {};
 
 	while (1)
 	{
@@ -151,9 +149,14 @@ int main(int argc, char* argv[])
 		addrlen = sizeof(clientaddr);
 		client_sock = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
 		if (client_sock == INVALID_SOCKET)
+		{
+			err_display("accept()");
 			break;
+		}
 
-
+		if (IsOkGameStart(++custom_counter))
+			break;
+		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_sock, 0, NULL);
 		
 
 		// closesocket()
@@ -173,9 +176,11 @@ void ServerInit()
 
 }
 
-BOOL IsOkGameStart()
+BOOL IsOkGameStart(int PlayerCount)
 {
-	return 0;
+	if (PlayerCount == CLIENT_NUM)
+		return TRUE;
+	return FALSE;
 }
 
 void RecTimer()
@@ -271,6 +276,7 @@ void FootHoldInit()
 
 void PlayerInit()
 {
+	
 }
 
 DWORD __stdcall ProcessClient(LPVOID arg)
