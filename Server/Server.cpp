@@ -276,7 +276,17 @@ void FootHoldInit()
 
 void PlayerInit()
 {
-	
+	for (int i = 0; i < CLIENT_NUM; ++i)
+	{
+		Players[i].player.x = 0;	// 좌표 값 어떻게 설정할 것인지(랜덤 or 지정) 나중에 상의!
+		Players[i].player.y = 5;
+		Players[i].player.z = 0;
+		Players[i].player.dx = 0;
+		Players[i].player.dy = 0;
+		Players[i].player.dz = 0;
+		Players[i].player.fall = true;
+		Players[i].player.Locate();
+	}
 }
 
 DWORD __stdcall ProcessClient(LPVOID arg)
