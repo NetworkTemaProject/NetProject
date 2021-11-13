@@ -6,14 +6,38 @@
 
 #define SERVERPORT 9000
 #define BUFSIZE 512
+#define CLINET_NUM 3
+
+using namespace std;
 
 int custom_counter();
 // vector<Foothold> Bottom;
 
+struct InputData {
+	bool bUp = false;
+	bool bRight = false;
+	bool bLeft = false;
+	bool bDown = false;
+	bool bSpace = false;
+	bool bEnter = false;
+};
+
 struct PlayerMgr
 {
-	DWORD portnum;
+	DWORD threadId;
 	// CPlayer player;
+};
+
+struct SendGameData {
+	PlayerMgr players[CLINET_NUM];
+	clock_t ServerTime;
+	bool Win;
+	std::vector<Foothold> Bottom;
+};
+
+struct SendPlayerData {
+	InputData Input;
+	clock_t ClientTime;
 };
 
 clock_t serverInit_time;
@@ -31,7 +55,8 @@ int portnum;
 
 bool Win;
 
-PlayerMgr Players[3];
+PlayerMgr players[CLINET_NUM];
+
 
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
@@ -213,8 +238,17 @@ void CheckCollidePlayers()
 {
 }
 
-void UpdatePlayerLocation()
+void UpdatePlayerLocation(CPlayer& p, InputData& input)
 {
+	if (input.dUp) p.dz = -0.1;
+	if (input.dDown) p.dz = 0.1;
+	if (input.dLeft) p.dx = -0.1;
+	if (input.dRight) p.dx = 0.1;
+
+	// 업데이트 중인지 판단 -> dx dz로 판단
+	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
+	if (p.dz && !input.dUp && !input.dDown) p.dz = 0.0;
+	if (p.dx && !input.dLeft && !input.dRight) p.dx = 0.0; 
 }
 
 void UpdateClientKeyInput()
@@ -240,6 +274,18 @@ void PlayerInit()
 
 DWORD __stdcall ProcessClient(LPVOID arg)
 {
+	CPlayer* tPlayer;
+	for (int i = 0; i < CLIENT_NUM; ++i)
+		if (players[i].threadId == GetCurrentThreadId()) tPlayer = &players[i].player;
+	// map 사용하면 -> .find( ) .. 돌아가면 이걸로 바꾼는게 나은거같음
+
+	while(1)
+	{
+		// recvn을 통해서 Inputdata , time 받아옴
+
+		UpdatePlayerLocation(tPlayer, PlayerMgr.input);
+		
+	}
 	return 0;
 }
 
