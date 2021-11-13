@@ -164,12 +164,12 @@ CPlayer player;
 #define CLINET_NUM 3
 
 struct InputData{
-	bool bUp;
-	bool bRight;
-	bool bLeft;
-	bool bDown;
-	bool bSpace;
-	bool bEnter;
+	bool bUp = false;
+	bool bRight = false;
+	bool bLeft = false;
+	bool bDown = false;
+	bool bSpace = false;
+	bool bEnter = false;
 };
 
 struct PlayerMgr {
@@ -471,55 +471,60 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	if (game_over) {
 		switch (key) {
-		case 'R':
-		{
-			Init_Game();
-			break;
-		}
-		case 'Q':
-		{
-			exit(0);
-			break;
-		}
+			case 'R':
+			{
+				Init_Game();
+				break;
+			}
+			case 'Q':
+			{
+				exit(0);
+				break;
+			}
 		}
 	}
 	else {
 		switch (key)
 		{
-		case 'w':
-		{
-			player.dz = -0.1;
-			break;
-		}
-		case 'a':
-		{
-			player.dx = -0.1;
-			break;
-		}
-		case 's':
-		{
-			player.dz = 0.1;
-			break;
-		}
-		case 'd':
-		{
-			player.dx = 0.1;
-			break;
-		}
-		case 32:
-		{
-			player.Jump();
-			break;
-		}
-		case 'p':
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			break;
-		case 'P':
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			break;
-		case 'Q':
-			exit(0);
-			break;
+			case 'w':
+			{
+				myPlayer.Input.bUp = true;
+				break;
+			}
+			case 'a':
+			{
+				myPlayer.Input.bLeft = true;
+				break;
+			}
+			case 's':
+			{
+				myPlayer.Input.bDown = true;
+				break;
+			}
+			case 'd':
+			{
+				myPlayer.Input.bRight = true;
+				break;
+			}
+			case 32:
+			{
+				myPlayer.Input.bSpace = true;
+				break;
+			}
+			case 13:
+			{
+				myPlayer.Input.bEnter = true;
+				break; 
+			}
+			case 'p':
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				break;
+			case 'P':
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+				break;
+			case 'Q':
+				exit(0);
+				break;
 		}
 	}
 	glutPostRedisplay();
@@ -528,16 +533,36 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 GLvoid KeyboardUp(unsigned char key, int x, int y)
 {
 	switch (key){
-	case 'w': case 's':
-	{
-		player.dz = 0;
-		break;
-	}
-	case 'a': case'd':
-	{
-		player.dx = 0;
-		break;
-	}
+		case 'w':
+		{
+			myPlayer.Input.bUp = false;
+			break;
+		}
+		case 's':
+		{
+			myPlayer.Input.bDown = false;
+			break;
+		}
+		case 'a':
+		{
+			myPlayer.Input.bLeft = false;
+			break;
+		}
+		case 'd':
+		{			
+			myPlayer.Input.bRight = false;
+			break;
+		}
+		case 32:
+		{
+			myPlayer.Input.bSpace = false;
+			break;
+		}
+		case 13:
+		{
+			myPlayer.Input.bEnter = false;
+			break;
+		}
 	}
 	glutPostRedisplay();
 }
