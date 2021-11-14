@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #pragma comment(lib,"ws2_32")
-#include <WinSock2.h>
+#include <winsock2.h>
 #include <cstdlib>
 #include "Foothold.h"
 #include"filetobuf.h"
@@ -58,6 +58,8 @@ clock_t past;
 clock_t present;
 clock_t start;
 bool game_over = false;
+
+DWORD WINAPI ClientMain(LPVOID arg);
 
 GLfloat	box[][3] = {
 	{ -0.5, 0, 0.5 },
@@ -240,9 +242,9 @@ void InitShader()
 	glUseProgram(s_program);
 }
 
-void main(int argc, char** argv)
+int main(int argc, char** argv)
 {
-	srand(time(0));
+	srand((unsigned int)time(NULL));
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA|GLUT_DEPTH);
@@ -259,11 +261,15 @@ void main(int argc, char** argv)
 	
 	Init_Game();
 
+	CreateThread(NULL, 0, ClientMain, NULL, 0, NULL);
+
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
 	glutKeyboardUpFunc(KeyboardUp);
 	glutMainLoop();
+
+	return 0;
 }
 
 void Timerfunction(int value)
@@ -273,7 +279,7 @@ void Timerfunction(int value)
 		player.Update();
 		check_collide();
 
-		for (int i = 0; i < Bottom.size(); ++i) {
+		for (size_t i = 0; i < Bottom.size(); ++i) {
 			if (Bottom[i].startDel)
 				Bottom[i].Delete();
 		}
@@ -368,7 +374,7 @@ GLvoid drawScene()
 	glUniformMatrix4fv(projection, 1, GL_FALSE, &ptrans[0][0]);
 
 	glBindVertexArray(vao);
-	for (int i = 0; i < Bottom.size(); ++i)
+	for (size_t i = 0; i < Bottom.size(); ++i)
 	{
 		Bottom[i].Draw_Start();
 		glUniform3f(color_location, Bottom[i].r, Bottom[i].g, Bottom[i].b);
@@ -551,7 +557,7 @@ GLvoid KeyboardUp(unsigned char key, int x, int y)
 void check_collide()
 {
 	player.fall = true;
-	for (int i = 0; i < Bottom.size(); ++i) {
+	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (collide_box(Bottom[i], player)) {
 			player.fall = false;
 			player.dy = 0;
@@ -560,7 +566,7 @@ void check_collide()
 		}
 	}
 
-	for (int i = 0; i < Bottom.size(); ++i) {
+	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (Bottom[i].Del)
 			Bottom.erase(Bottom.begin() + i);
 	}
@@ -571,13 +577,13 @@ bool collide_box(Foothold bottom, CPlayer& player)
 	float b_maxX, b_minX, p_maxX, p_minX;
 	float b_maxY, b_minY, p_maxY, p_minY;
 	float b_maxZ, b_minZ, p_maxZ, p_minZ;
-	p_maxX = player.x + 0.15; p_minX = player.x - 0.15;
-	p_maxY = player.y + 0.1; p_minY = player.y - 0.1;
-	p_maxZ = player.z + 0.15; p_minZ = player.z - 0.15;
+	p_maxX = player.x + 0.15f; p_minX = player.x - 0.15f;
+	p_maxY = player.y + 0.1f; p_minY = player.y - 0.1f;
+	p_maxZ = player.z + 0.15f; p_minZ = player.z - 0.15f;
 
-	b_maxX = bottom.mx + 0.4; b_minX = bottom.mx - 0.4;
-	b_maxY = bottom.my + 0.35; b_minY = bottom.my + 0.25;
-	b_maxZ = bottom.mz + 0.4; b_minZ = bottom.mz - 0.4;
+	b_maxX = bottom.mx + 0.4f; b_minX = bottom.mx - 0.4f;
+	b_maxY = bottom.my + 0.35f; b_minY = bottom.my + 0.25f;
+	b_maxZ = bottom.mz + 0.4f; b_minZ = bottom.mz - 0.4f;
 
 	if (b_maxX < p_minX || b_minX > p_maxX)
 		return false;  
@@ -585,7 +591,7 @@ bool collide_box(Foothold bottom, CPlayer& player)
 		return false;
 	if (b_maxY < p_minY || b_minY > p_maxY)
 		return false;
-	player.y = bottom.my + 0.3;
+	player.y = bottom.my + 0.3f;
 	return true;
 }
 
@@ -624,6 +630,15 @@ void Init_Game()
 	player.Locate();
 
 	glutTimerFunc(50, Timerfunction, 1);
+}
+
+DWORD WINAPI ClientMain(LPVOID arg)
+{
+	int retval;
+
+	// 윈속 초기화
+
+	return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////

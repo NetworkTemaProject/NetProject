@@ -66,6 +66,6 @@ struct PlayerMgr {
 };
 
 struct SendPlayerData {
-	InputData Input;
-	clock_t ClientTime;
+	InputData Input = {};
+	clock_t ClientTime = {};
 };

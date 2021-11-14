@@ -152,13 +152,13 @@ void CPlayer::Jump()
 void CPlayer::Fall()
 {
 	if(fall)
-		if (dy > -0.2)
-			dy -= 0.03;
+		if (dy > -0.2f)
+			dy -= 0.03f;
 }
 
 void CPlayer::get_angle()
 {
 	if (dx == 0 && dz == 0)
 		return;
-	angle_turn = atan2f(dx, dz) * 180 / 3.141592;
+	angle_turn = atan2f(dx, dz) * 180.0f / 3.141592f;
 }
