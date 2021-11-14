@@ -47,3 +47,25 @@ public:
 	void Fall();
 	void get_angle();
 };
+
+//////////////////////////////////////////////////////////////////
+#define CLINET_NUM 3
+
+struct InputData {
+	bool bUp = false;
+	bool bRight = false;
+	bool bLeft = false;
+	bool bDown = false;
+	bool bSpace = false;
+	bool bEnter = false;
+};
+
+struct PlayerMgr {
+	DWORD portnum;
+	CPlayer player;
+};
+
+struct SendPlayerData {
+	InputData Input;
+	clock_t ClientTime;
+};
