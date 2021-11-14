@@ -220,15 +220,15 @@ void CheckCollidePlayers()
 
 void UpdatePlayerLocation(CPlayer& p, InputData& input)
 {
-	if (input.dUp) p.dz = -0.1;
-	if (input.dDown) p.dz = 0.1;
-	if (input.dLeft) p.dx = -0.1;
-	if (input.dRight) p.dx = 0.1;
+	if (input.bUp) p.dz = -0.1;
+	if (input.bDown) p.dz = 0.1;
+	if (input.bLeft) p.dx = -0.1;
+	if (input.bRight) p.dx = 0.1;
 
 	// 업데이트 중인지 판단 -> dx dz로 판단
 	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
-	if (p.dz && !input.dUp && !input.dDown) p.dz = 0.0;
-	if (p.dx && !input.dLeft && !input.dRight) p.dx = 0.0; 
+	if (p.dz && !input.bUp && !input.bDown) p.dz = 0.0;
+	if (p.dx && !input.bLeft && !input.bRight) p.dx = 0.0; 
 }
 
 void UpdateClientKeyInput()
