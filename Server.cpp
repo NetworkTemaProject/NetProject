@@ -21,6 +21,13 @@ clock_t serverInit_time;
 clock_t serverPre_time;
 clock_t serverDelta_time;
 
+struct SendGameData{
+	PlayerMgr players[CLIENT_NUM];
+	clock_t ServerTime;
+	bool Win;
+	vector<Foothold> Bottom;
+};
+
 bool IsCollisionPandF;
 bool IsCollisionP1andP2;
 
@@ -33,7 +40,7 @@ int portnum;
 bool Win;
 
 PlayerMgr Players[CLIENT_NUM];
-
+SendGameData ServerGameData;
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
@@ -53,6 +60,7 @@ bool IsCollidePlayerByPlayer(CPlayer& a, CPlayer& b);
 void CheckCollidePlayers();
 void UpdatePlayerLocation(CPlayer& p, InputData& input);
 void UpdateFootholdbyPlayer(CPlayer& player);
+void InitServerSendData();
 void UpdateClientKeyInput();
 void CheckGameOver();
 void SetCilentData(DWORD portnum);
@@ -335,6 +343,11 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 }
 
 bool IsReadytoPlay(bool isReady)
+{
+
+}
+
+void InitServerSendData()
 {
 
 }
