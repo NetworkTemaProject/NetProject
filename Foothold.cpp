@@ -87,3 +87,23 @@ void MakeFoothold(vector<Foothold> &Bottom)
 		}
 	}
 }
+
+void DeleteRandomFoothold(vector<Foothold>& Bottom)
+{
+	for (int i = 0; i < 5; ++i)
+	{
+		Bottom[rand() % 25].Del = true;
+		Bottom[rand() % 25 + 25].Del = true;
+		Bottom[rand() % 25 + 50].Del = true;
+		Bottom[rand() % 25 + 75].Del = true;
+		Bottom[rand() % 25 + 100].Del = true;
+	}
+
+	for (int i = Bottom.size() - 1; i >= 0; --i)
+	{
+		if (Bottom[i].Del)
+		{
+			Bottom.erase(Bottom.begin() + i);
+		}
+	}
+}

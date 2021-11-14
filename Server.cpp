@@ -247,40 +247,8 @@ void SetCilentData(DWORD portnum)
 void FootHoldInit()
 {
 	Bottom.clear();
-
-	srand(time(0));
-	float r, g, b;
-
-	for (int k = 0; k < N; ++k)
-	{
-		r = rand() / MAX;
-		g = rand() / MAX;
-		b = rand() / MAX;
-		for (int i = 0; i < N; ++i)
-		{
-			for (int j = 0; j < N; ++j)
-			{
-				Bottom.push_back(Foothold(-2.0f + (foothold_sizex + 0.1f) * j, 2.0f - 5.0f * k, -2.0f + (foothold_sizez + 0.1f) * i
-					, r, g, b));
-			}	// -화면크기 + (발판사이즈 + 간격) 
-		}
-	}
-
-	for (int i = 0; i < 5; ++i)
-	{
-		Bottom[rand() % 25].Del = true;
-		Bottom[rand() % 25 + 25].Del = true;
-		Bottom[rand() % 25 + 50].Del = true;
-		Bottom[rand() % 25 + 75].Del = true;
-		Bottom[rand() % 25 + 100].Del = true;
-	}
-	for (int i = Bottom.size() - 1; i >= 0; --i)
-	{
-		if (Bottom[i].Del)
-		{
-			Bottom.erase(Bottom.begin() + i);
-		}
-	}
+	MakeFoothold(Bottom);
+	DeleteRandomFoothold(Bottom);
 }
 
 void PlayerInit()

@@ -63,3 +63,4 @@ public:
 };
 
 void MakeFoothold(vector<Foothold> &Bottom);
+void DeleteRandomFoothold(vector<Foothold>& Bottom);
