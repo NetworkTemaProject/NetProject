@@ -51,7 +51,8 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player);
 bool IsCollidePlayerByPlayer(CPlayer& a, CPlayer& b);
 
 void CheckCollidePlayers();
-void UpdatePlayerLocation();
+void UpdatePlayerLocation(CPlayer& p, InputData& input);
+void UpdateFootholdbyPlayer(CPlayer& player);
 void UpdateClientKeyInput();
 void CheckGameOver();
 void SetCilentData(DWORD portnum);
@@ -200,13 +201,64 @@ void CreateMainGameScene()
 {
 }
 
+
+void UpdateFootholdbyPlayer(CPlayer& player)
+{
+	player.fall = true;
+	for (int i = 0; i < Bottom.size(); ++i) {
+		if (IsCollideFootholdByPlayer(Bottom[i], player)) {
+			player.fall = false;
+			player.dy = 0;
+			Bottom[i].startDel = true;
+			break;
+		}
+	}
+}
+
 void CheckCollideFoothold()
 {
+	for (int i = 0; i < Bottom.size(); ++i) {
+		if (Bottom[i].Del)
+			Bottom.erase(Bottom.begin() + i);
+	}
+
+	for (int i = 0; i < Bottom.size(); ++i) {
+		if (Bottom[i].startDel)
+			Bottom[i].Delete();
+	}
+
+	for (int i = Bottom.size() - 1; i >= 0; --i) {
+		if (Bottom[i].Del)
+		{
+			// 발판 삭제 후 점수 등 추가내용 반영
+			// score += Bottom[i].score;
+			//++cnt;
+			Bottom.erase(Bottom.begin() + i);
+		}
+	}
 }
 
 bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player)
 {
-	return false;
+	float b_maxX, b_minX, p_maxX, p_minX;
+	float b_maxY, b_minY, p_maxY, p_minY;
+	float b_maxZ, b_minZ, p_maxZ, p_minZ;
+	p_maxX = player.x + 0.15; p_minX = player.x - 0.15;
+	p_maxY = player.y + 0.1; p_minY = player.y - 0.1;
+	p_maxZ = player.z + 0.15; p_minZ = player.z - 0.15;
+
+	b_maxX = foot.mx + 0.4; b_minX = foot.mx - 0.4;
+	b_maxY = foot.my + 0.35; b_minY = foot.my + 0.25;
+	b_maxZ = foot.mz + 0.4; b_minZ = foot.mz - 0.4;
+
+	if (b_maxX < p_minX || b_minX > p_maxX)
+		return false;
+	if (b_maxZ < p_minZ || b_minZ > p_maxZ)
+		return false;
+	if (b_maxY < p_minY || b_minY > p_maxY)
+		return false;
+	player.y = foot.my + 0.3;
+	return true;
 }
 
 bool IsCollidePlayerByPlayer(CPlayer& a, CPlayer& b)
@@ -269,15 +321,17 @@ void PlayerInit()
 DWORD __stdcall ProcessClient(LPVOID arg)
 {
 	// 플레이어 구분 후 좌표업데이트
-	/*
-	CPlayer* tPlayer;
-	for (int i = 0; i < CLIENT_NUM; ++i)
-		if (Players[i].threadId == GetCurretnThreadId()) tPlayer == &player[i].player;
+	
+	//CPlayer* tPlayer;
+	//for (int i = 0; i < CLIENT_NUM; ++i)
+	//	if (Players[i].threadId == GetCurretnThreadId()) tPlayer == &player[i].player;
 
 	while (1)
 	{
-		UpdatePlayerLocation(tPlayer,PlayerMgr.input)
-	}*/
+		//UpdatePlayerLocation(*tPlayer,PlayerMgr.input);
+		//UpdateFootholdbyPlayer(*tPlayer);
+		CheckCollideFoothold();
+	}
 }
 
 bool IsReadytoPlay(bool isReady)
