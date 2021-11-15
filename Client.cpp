@@ -4,7 +4,7 @@
 #include <winsock2.h>
 #include <cstdlib>
 #include "Foothold.h"
-#include"filetobuf.h"
+#include "filetobuf.h"
 #include "Player.h"
 #define pi 3.141592
 
@@ -57,7 +57,15 @@ char over[10] = "Game Over";
 clock_t past;
 clock_t present;
 clock_t start;
-bool game_over = false;
+bool game_over = false; // 대기 화면인가? 게임중인가? 게임이 끝나는가?
+
+enum class EGameState
+{
+	TITLE,
+	WATING,
+	PLAYING,
+	GAMEOVER
+};
 
 DWORD WINAPI ClientMain(LPVOID arg);
 
@@ -274,30 +282,31 @@ int main(int argc, char** argv)
 
 void Timerfunction(int value)
 {
-	switch (value) {
-	case 1:
-		player.Update();
-		check_collide();
+	// EGameState에 따라서 화면에 그리는 것이 달라지도록 만들기!
 
-		for (size_t i = 0; i < Bottom.size(); ++i) {
-			if (Bottom[i].startDel)
-				Bottom[i].Delete();
-		}
+	player.Update();
+	check_collide();
 
-		for (int i = Bottom.size() - 1; i >= 0; --i) {
-			if (Bottom[i].Del)
-			{
-				score += Bottom[i].score;
-				++cnt;
-				Bottom.erase(Bottom.begin() + i);
-			}
-		}
-
-		glutPostRedisplay();
-		if(!game_over)
-			glutTimerFunc(50, Timerfunction, 1);
-		break;
+	for (size_t i = 0; i < Bottom.size(); ++i)
+	{
+		if (Bottom[i].startDel)
+			Bottom[i].Delete();
 	}
+
+	for (int i = Bottom.size() - 1; i >= 0; --i)
+	{
+		if (Bottom[i].Del)
+		{
+			score += Bottom[i].score;
+			++cnt;
+			Bottom.erase(Bottom.begin() + i);
+		}
+	}
+
+	glutPostRedisplay();
+
+	if (!game_over)
+		glutTimerFunc(50, Timerfunction, 1);
 }
 
 void renderBitmapCharacher(float x, float y, float z, void* font, char* string)
