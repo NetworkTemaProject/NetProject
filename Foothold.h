@@ -50,9 +50,9 @@ public:
 
 			if (my < 0)
 				// Ãş ³·¾ÆÁú¼ö·Ï score °ª Áõ°¡
-				score = 10 * (-my);
+				score = int(10 * -my);
 			else
-				score = 10 * my;
+				score = int(10 * my);
 	}
 
 	~Foothold(){}

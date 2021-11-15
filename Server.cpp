@@ -163,9 +163,13 @@ int main(int argc, char* argv[])
 			break;
 		}
 
-		if (IsOkGameStart(++custom_counter))
-			break;
 		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_sock, 0, NULL);
+
+		if (IsOkGameStart(++custom_counter))
+		{
+			ServerInit();
+			break;
+		}
 		
 
 		// closesocket()
@@ -182,7 +186,8 @@ int main(int argc, char* argv[])
 
 void ServerInit()
 {
-
+	FootHoldInit();
+	PlayerInit();
 }
 
 BOOL IsOkGameStart(int PlayerCount)
