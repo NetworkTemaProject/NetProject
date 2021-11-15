@@ -22,11 +22,12 @@ clock_t serverPre_time;
 clock_t serverDelta_time;
 
 struct SendGameData{
-	PlayerMgr players[CLIENT_NUM];
+	PlayerMgr* players;
 	clock_t ServerTime;
-	bool Win;
-	vector<Foothold> Bottom;
+	bool Win;	
+	vector<Foothold>& Bottom;
 };
+// 각 플레이어의 승패여부 확인을 위해 PlayerMgr로 옮기기??
 
 bool IsCollisionPandF;
 bool IsCollisionP1andP2;
@@ -44,7 +45,7 @@ SendGameData ServerGameData;
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
-
+SOCKET client_sock;
 
 void ServerInit();
 BOOL IsOkGameStart(int PlayerCount);
@@ -146,7 +147,6 @@ int main(int argc, char* argv[])
 	if (retval == SOCKET_ERROR) err_quit("listen()");
 
 	// 데이터 통신에 사용할 변수
-	SOCKET client_sock;
 	SOCKADDR_IN clientaddr;
 	int addrlen;
 
@@ -339,6 +339,9 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		//UpdatePlayerLocation(*tPlayer,PlayerMgr.input);
 		//UpdateFootholdbyPlayer(*tPlayer);
 		CheckCollideFoothold();
+		int nServerDataLen = sizeof(SendGameData);
+		send(client_sock, (char*)&nServerDataLen, sizeof(int), 0);
+		send(client_sock,(char*)&ServerGameData, nServerDataLen, 0);
 	}
 }
 
@@ -349,5 +352,8 @@ bool IsReadytoPlay(bool isReady)
 
 void InitServerSendData()
 {
-
+	ServerGameData.players = Players;
+	ServerGameData.Bottom = Bottom;
+	//ServerGameData.ServerTime;
+	//ServerGameData.Win;
 }
