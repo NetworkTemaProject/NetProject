@@ -188,6 +188,7 @@ void ServerInit()
 {
 	FootHoldInit();
 	PlayerInit();
+	InitServerSendData();
 }
 
 BOOL IsOkGameStart(int PlayerCount)
@@ -285,15 +286,15 @@ void CheckCollidePlayers()
 
 void UpdatePlayerLocation(CPlayer& p, InputData& input)
 {
-	if (input.bUp) p.dz = -0.1;
-	if (input.bDown) p.dz = 0.1;
-	if (input.bLeft) p.dx = -0.1;
-	if (input.bRight) p.dx = 0.1;
+	if (input.bUp) p.dz = -0.1f;
+	if (input.bDown) p.dz = 0.1f;
+	if (input.bLeft) p.dx = -0.1f;
+	if (input.bRight) p.dx = 0.1f;
 
 	// 업데이트 중인지 판단 -> dx dz로 판단
 	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
-	if (p.dz && !input.bUp && !input.bDown) p.dz = 0.0;
-	if (p.dx && !input.bLeft && !input.bRight) p.dx = 0.0; 
+	if (p.dz && !input.bUp && !input.bDown) p.dz = 0.0f;
+	if (p.dx && !input.bLeft && !input.bRight) p.dx = 0.0f; 
 }
 
 void UpdateClientKeyInput()
