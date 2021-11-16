@@ -62,7 +62,7 @@ struct InputData {
 };
 
 struct PlayerMgr {
-	DWORD portnum;
+	DWORD portnum = NULL;
 	CPlayer player;
 	bool Win;
 };

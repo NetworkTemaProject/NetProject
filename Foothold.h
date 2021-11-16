@@ -26,17 +26,18 @@ public:
 	float cx, cy, cz;
 	float rx, ry, rz;
 	float r, g, b;
-	int model, color_location;
+	int model = 0;
+	int color_location = 0;
 	int size;
 	int ani;
 	float theta;
 	int score;
 	int cnt;
 
-	glm::mat4 Move;
-	glm::mat4 Scale;
-	glm::mat4 Rotate;
-	glm::mat4 Drawing;
+	glm::mat4 Move = {};
+	glm::mat4 Scale = {};
+	glm::mat4 Rotate = {};
+	glm::mat4 Drawing = {};
 	bool Del = FALSE;
 	bool startDel = false;
 
