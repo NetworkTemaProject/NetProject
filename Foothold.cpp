@@ -1,4 +1,4 @@
-#include"Foothold.h"
+ï»¿#include"Foothold.h"
 
 void Foothold::Init() {
 	Move = glm::mat4(1.0f);
@@ -12,7 +12,7 @@ void Foothold::Init() {
 }
 
 void Foothold::Pos_Drawing() {	
-	Drawing = Move * Rotate *Scale ; //¾Ö´Ï¸ŞÀÌ¼Ç/Ä«¸Ş¶ó Ãß°¡ ÇÊ¿ä
+	Drawing = Move * Rotate *Scale ; //ì• ë‹ˆë©”ì´ì…˜/ì¹´ë©”ë¼ ì¶”ê°€ í•„ìš”
 }
 
 void Foothold::Draw_Start() {
@@ -20,9 +20,9 @@ void Foothold::Draw_Start() {
 	Pos_Drawing();
 } 
 
-// ÇÃ·¹ÀÌ¾î°¡ ¹ßÆÇÀ» ¹âÀ¸¸é StarDel =TRUE·Î º¯°æ
-// StarDelÀÌ TRUEÀÏ µ¿¾È Delete()¸¦ È£ÃâÇØ¼­ ¾Ö´Ï¸ŞÀÌ¼Ç º¸¿©ÁÜ
-// ¾Ö´Ï¸ŞÀÌ¼Ç ³¡³ª¸é Del = TRUE·Î º¯°æ, ¹ßÆÇ »èÁ¦
+// í”Œë ˆì´ì–´ê°€ ë°œíŒì„ ë°Ÿìœ¼ë©´ StarDel =TRUEë¡œ ë³€ê²½
+// StarDelì´ TRUEì¼ ë™ì•ˆ Delete()ë¥¼ í˜¸ì¶œí•´ì„œ ì• ë‹ˆë©”ì´ì…˜ ë³´ì—¬ì¤Œ
+// ì• ë‹ˆë©”ì´ì…˜ ëë‚˜ë©´ Del = TRUEë¡œ ë³€ê²½, ë°œíŒ ì‚­ì œ
 void  Foothold::Delete() {
 	switch (ani) {
 	case 0:
@@ -83,7 +83,7 @@ void MakeFoothold(vector<Foothold> &Bottom)
 			{
 				Bottom.push_back(Foothold(-2.0f + (foothold_sizex + 0.1f) * j, 2.0f - 5.0f * k, -2.0f + (foothold_sizez + 0.1f) * i
 					, r, g, b));
-			}	// -È­¸éÅ©±â + (¹ßÆÇ»çÀÌÁî + °£°İ) 
+			}	// -í™”ë©´í¬ê¸° + (ë°œíŒì‚¬ì´ì¦ˆ + ê°„ê²©) 
 		}
 	}
 }

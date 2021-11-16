@@ -1,4 +1,4 @@
-#include "Player.h"
+﻿#include "Player.h"
 
 void Part::makePart(int type, bool leftPart)
 {

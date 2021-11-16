@@ -57,7 +57,7 @@ char over[10] = "Game Over";
 clock_t past;
 clock_t present;
 clock_t start;
-bool game_over = false; // ��� ȭ���ΰ�? �������ΰ�? ������ �����°�?
+bool game_over = false; // 대기 화면인가? 게임중인가? 게임이 끝나는가?
 
 enum class EGameState
 {
@@ -304,7 +304,7 @@ int main(int argc, char** argv)
 
 void Timerfunction(int value)
 {
-	// EGameState�� ���� ȭ�鿡 �׸��� ���� �޶������� �����!
+	// EGameState에 따라서 화면에 그리는 것이 달라지도록 만들기!
 
 	player.Update();
 	check_collide();
@@ -393,6 +393,7 @@ GLvoid drawScene()
 	camX = (float)sin(theta / 180 * 3.141592) * radius;
 	camY = +0.0;
 	camZ = -1 * (float)cos(theta / 180 * 3.141592) * radius;
+	// 자신의 플레이어 인덱스 구분을 통해서 출력 위치 변경필요
 	vtrans = glm::lookAt(glm::vec3(player.x, player.y + 2, player.z + 2), glm::vec3(player.x, player.y, player.z), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	unsigned int view = glGetUniformLocation(s_program, "view");
@@ -447,7 +448,9 @@ GLvoid drawScene()
 		Time_score();
 
 	tine = present - start;
+	// 플레이어 인덱스 구분을 통해서 자신의 점수만 출력
 	Print_word(0.5f, 0.8f, 0.7f, 0.8f, score,word1);
+	// 시간 처리 후 ServerData의 시간으로 변경필요 (check_bonus 함수도)
 	Print_word(0.5f, 0.7f, 0.8f, 0.7f,tine, word2);
 	check_Bonus();
 

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <gl/glew.h>
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
@@ -17,7 +17,7 @@ using namespace std;
 #define foothold_sizez 0.8f
 #define N 5
 #define foothold_vertex 36
-#define MAX 32767.0f			// ½Ç¼ö rand() À§ÇÑ º¯¼ö°ª
+#define MAX 32767.0f			// ì‹¤ìˆ˜ rand() ìœ„í•œ ë³€ìˆ˜ê°’
 #define UNDER -23.0f
 
 class Foothold {
@@ -49,7 +49,7 @@ public:
 			ani = rand() % 5;
 
 			if (my < 0)
-				// Ãþ ³·¾ÆÁú¼ö·Ï score °ª Áõ°¡
+				// ì¸µ ë‚®ì•„ì§ˆìˆ˜ë¡ score ê°’ ì¦ê°€
 				score = int(10 * -my);
 			else
 				score = int(10 * my);

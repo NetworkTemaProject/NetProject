@@ -19,7 +19,6 @@ struct SendGameData{
 	clock_t ServerTime;
 	vector<Foothold>& Bottom;
 };
-// 각 플레이어의 승패여부 확인을 위해 PlayerMgr로 옮기기??
 
 bool IsCollisionPandF;
 bool IsCollisionP1andP2;
