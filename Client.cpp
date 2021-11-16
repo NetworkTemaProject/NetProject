@@ -22,6 +22,7 @@ void make_fragmentShader();
 void renderBitmapCharacher(float, float , float, void*, char* );
 void Print_word(float, float, float, float, int, char*);
 void check_GameOver();
+void Print_GameState();	// 현재 게임 상태에 따라 화면에 Title String, Wating String, over을 출력하는 함수 
 void check_Bonus();
 
 void check_collide();
@@ -54,9 +55,13 @@ char char_score[256];
 char word1[10] = "score:";
 char word2[11] = "life time:";
 char over[10] = "Game Over";
+char TitleString[16] = "Press Enter Key";
+char WaitString[12] = "Wating. . .";
+
 clock_t past;
 clock_t present;
 clock_t start;
+// TODO: game_over 대신 CurrentGameState로 게임 상황 구분하도록 한 후, game_over 변수 삭제하기
 bool game_over = false; // 대기 화면인가? 게임중인가? 게임이 끝나는가?
 
 enum class EGameState
@@ -66,6 +71,8 @@ enum class EGameState
 	PLAYING,
 	GAMEOVER
 };
+
+int CurrentGameState = static_cast<int>(EGameState::TITLE);
 
 DWORD WINAPI ClientMain(LPVOID arg);
 
@@ -304,31 +311,55 @@ int main(int argc, char** argv)
 
 void Timerfunction(int value)
 {
-	// EGameState에 따라서 화면에 그리는 것이 달라지도록 만들기!
-
-	player.Update();
-	check_collide();
-
-	for (size_t i = 0; i < Bottom.size(); ++i)
+	switch (CurrentGameState)
 	{
-		if (Bottom[i].startDel)
-			Bottom[i].Delete();
-	}
-
-	for (int i = Bottom.size() - 1; i >= 0; --i)
-	{
-		if (Bottom[i].Del)
+		case static_cast<int>(EGameState::TITLE):
 		{
-			score += Bottom[i].score;
-			++cnt;
-			Bottom.erase(Bottom.begin() + i);
+			cout << TitleString << endl;
+			break;
+		}
+		case static_cast<int>(EGameState::WATING):
+		{
+			// TODO: 서버와 연결 후 입장 인원이 2명이 될 때까지 대기
+			cout << WaitString << endl;
+			break;
+		}
+		case static_cast<int>(EGameState::PLAYING):
+		{
+			player.Update();
+			check_collide();
+
+			for (size_t i = 0; i < Bottom.size(); ++i)
+			{
+				if (Bottom[i].startDel)
+					Bottom[i].Delete();
+			}
+
+			for (int i = Bottom.size() - 1; i >= 0; --i)
+			{
+				if (Bottom[i].Del)
+				{
+					score += Bottom[i].score;
+					++cnt;
+					Bottom.erase(Bottom.begin() + i);
+				}
+			}
+
+			glutTimerFunc(50, Timerfunction, 1);
+			glutPostRedisplay();
+			break;
+		}
+		case static_cast<int>(EGameState::GAMEOVER):
+		{
+			break;
 		}
 	}
 
-	glutPostRedisplay();
+	
+	// glutPostRedisplay();
 
-	if (!game_over)
-		glutTimerFunc(50, Timerfunction, 1);
+	/*if (!game_over)
+		glutTimerFunc(50, Timerfunction, 1);*/
 }
 
 void renderBitmapCharacher(float x, float y, float z, void* font, char* string)
@@ -414,7 +445,8 @@ GLvoid drawScene()
 		glDrawArrays(GL_TRIANGLES, 0, ServerDatas->Bottom[i].size);
 	}
 
-	for (size_t i = 0; i < CLIENT_NUM; ++i) {
+	for (size_t i = 0; i < CLIENT_NUM; ++i) 
+	{
 		// head
 		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.head.r, (ServerDatas->PMgr[i]).player.head.g, (ServerDatas->PMgr[i]).player.head.b);
 		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.head.TRS)));
@@ -444,7 +476,7 @@ GLvoid drawScene()
 	}
 	check_GameOver();
 
-	if(!game_over)
+	if(CurrentGameState == static_cast<int>(EGameState::PLAYING))
 		Time_score();
 
 	tine = present - start;
@@ -453,6 +485,8 @@ GLvoid drawScene()
 	// 시간 처리 후 ServerData의 시간으로 변경필요 (check_bonus 함수도)
 	Print_word(0.5f, 0.7f, 0.8f, 0.7f,tine, word2);
 	check_Bonus();
+	
+	Print_GameState();
 
 	glutSwapBuffers();
 }
@@ -465,6 +499,30 @@ void check_GameOver()
 	{
 		if (player.y < UNDER)
 			game_over = true;
+	}
+}
+
+void Print_GameState()
+{
+	switch (CurrentGameState)
+	{
+		case static_cast<int>(EGameState::TITLE):
+		{
+			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, TitleString);
+			break;
+		}
+		case static_cast<int>(EGameState::WATING):
+		{
+			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, WaitString);
+			break;
+		}
+		case static_cast<int>(EGameState::GAMEOVER):
+		{
+			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, over);
+			break;
+		}
+		default:
+			break;
 	}
 }
 
@@ -491,6 +549,20 @@ GLvoid Reshape(int w, int h)
 
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
+	// TODO: CurrentGameState에 따라 키 입력받는 것 달라지도록 변경하기.
+	if (CurrentGameState == static_cast<int>(EGameState::TITLE))
+	{
+		switch (key)
+		{
+			case VK_RETURN:
+			{
+				CurrentGameState = static_cast<int>(EGameState::WATING);
+				glutTimerFunc(50, Timerfunction, 1);
+				break;
+			}
+		}
+	}
+
 	if (game_over) {
 		switch (key) {
 			case 'R':
