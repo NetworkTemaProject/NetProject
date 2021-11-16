@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+ï»¿#define _CRT_SECURE_NO_WARNINGS
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #pragma comment(lib,"ws2_32")
 #include <winsock2.h>
@@ -68,7 +68,7 @@ GLfloat	box[][3] = {
 
 	{ 0.5, 1, 0.5 },
 	{ -0.5, 1, 0.5 },
-	{ -0.5, 0, 0.5 }, // ¾Õ¸é
+	{ -0.5, 0, 0.5 }, // ì•ë©´
 
 	{ -0.5, 0, -0.5 },
 	{ 0.5, 0, -0.5 },
@@ -76,7 +76,7 @@ GLfloat	box[][3] = {
 
 	{ 0.5, 0, -0.5 },
 	{ 0.5, 0, 0.5 },
-	{ -0.5, 0, 0.5 }, // ¹Ø¸é
+	{ -0.5, 0, 0.5 }, // ë°‘ë©´
 
 	{ -0.5,0, 0.5 }, 
 	{ -0.5, 1, 0.5 },
@@ -84,7 +84,7 @@ GLfloat	box[][3] = {
 
 	{ -0.5, 1, 0.5 },
 	{ -0.5, 1, -0.5 },
-	{ -0.5, 0, -0.5 }, //¿Ş¿·¸é (¹Ù¶óº¸´Â±âÁØ)
+	{ -0.5, 0, -0.5 }, //ì™¼ì˜†ë©´ (ë°”ë¼ë³´ëŠ”ê¸°ì¤€)
 
 	{ -0.5, 0, -0.5 }, 
 	{ 0.5, 0, -0.5 },
@@ -92,7 +92,7 @@ GLfloat	box[][3] = {
 
 	{ 0.5, 0, -0.5 },
 	{ 0.5, 1, -0.5 },
-	{ -0.5, 1, -0.5 }, //µŞ¸é
+	{ -0.5, 1, -0.5 }, //ë’·ë©´
 
 	{ -0.5, 1, 0.5 },
 	{ 0.5, 1, 0.5 },
@@ -100,7 +100,7 @@ GLfloat	box[][3] = {
 
 	{ -0.5, 1, -0.5 },
 	{ 0.5, 1, 0.5 },
-	{ 0.5,1, -0.5 }, //À­¸é
+	{ 0.5,1, -0.5 }, //ìœ—ë©´
 
 	{ 0.5, 1, -0.5 },
 	{ 0.5, 1, 0.5 },
@@ -108,7 +108,7 @@ GLfloat	box[][3] = {
 
 	{ 0.5, 1, 0.5 },
 	{ 0.5, 0, 0.5 },
-	{ 0.5, 0, -0.5 }, //¿À¸¥¿·¸é
+	{ 0.5, 0, -0.5 }, //ì˜¤ë¥¸ì˜†ë©´
 };
 GLfloat	boxN[][3] = {
 	 0.0f,  0.0f,  1.0f, 
@@ -117,7 +117,7 @@ GLfloat	boxN[][3] = {
 
 	 0.0f,  0.0f,  1.0f,
 	 0.0f,  0.0f,  1.0f,
-	 0.0f,  0.0f,  1.0f, // ¾Õ¸é
+	 0.0f,  0.0f,  1.0f, // ì•ë©´
 
 	  0.0f, -1.0f,  0.0f,
 	  0.0f, -1.0f,  0.0f,
@@ -125,7 +125,7 @@ GLfloat	boxN[][3] = {
 
 	  0.0f, -1.0f,  0.0f,
 	  0.0f, -1.0f,  0.0f,
-	  0.0f, -1.0f,  0.0f, // ¹Ø¸é
+	  0.0f, -1.0f,  0.0f, // ë°‘ë©´
 
 	  -1.0f,  0.0f,  0.0f,
 	  -1.0f,  0.0f,  0.0f,
@@ -133,7 +133,7 @@ GLfloat	boxN[][3] = {
 
 	  -1.0f,  0.0f,  0.0f,
 	  -1.0f,  0.0f,  0.0f,
-	  -1.0f,  0.0f,  0.0f, //¿·¸é
+	  -1.0f,  0.0f,  0.0f, //ì˜†ë©´
 
 	  0.0f,  0.0f, -1.0f,
 	  0.0f,  0.0f, -1.0f,
@@ -141,7 +141,7 @@ GLfloat	boxN[][3] = {
 
 	  0.0f,  0.0f, -1.0f,
 	  0.0f,  0.0f, -1.0f,
-	  0.0f,  0.0f, -1.0f, //µŞ¸é
+	  0.0f,  0.0f, -1.0f, //ë’·ë©´
 
 	  0.0f,  1.0f,  0.0f,
 	  0.0f,  1.0f,  0.0f,
@@ -149,7 +149,7 @@ GLfloat	boxN[][3] = {
 
 	  0.0f,  1.0f,  0.0f,
 	  0.0f,  1.0f,  0.0f,
-	  0.0f,  1.0f,  0.0f, //À­¸é
+	  0.0f,  1.0f,  0.0f, //ìœ—ë©´
 
 	  1.0f,  0.0f,  0.0f,
 	  1.0f,  0.0f,  0.0f,
@@ -186,7 +186,7 @@ bool IsPlayingGame();
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-// »ç¿ëÀÚ Á¤ÀÇ µ¥ÀÌÅÍ ¼ö½Å ÇÔ¼ö
+// ì‚¬ìš©ì ì •ì˜ ë°ì´í„° ìˆ˜ì‹  í•¨ìˆ˜
 int recvn(SOCKET s, char* buf, int len, int flags)
 {
 	int received;
@@ -272,7 +272,7 @@ int main(int argc, char** argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA|GLUT_DEPTH);
 	glutInitWindowPosition(400, 100);
 	glutInitWindowSize(600, 600);
-	glutCreateWindow("±â¸»");
+	glutCreateWindow("ê¸°ë§");
 
 	glewExperimental = GL_TRUE;
 	glewInit();
@@ -366,7 +366,7 @@ GLvoid drawScene()
 	glm::mat4 ptrans = glm::mat4(1.0f);
 	glm::mat4 vtrans = glm::mat4(1.0f);
 
-	Lx = (float)cos(ltheta / 180 * 3.141592) * lx;			// Á¶¸í È¸Àü
+	Lx = (float)cos(ltheta / 180 * 3.141592) * lx;			// ì¡°ëª… íšŒì „
 	Ly = ly;
 	Lz = (float)sin(ltheta / 180 * 3.141592) * (-lz);
 
@@ -680,20 +680,20 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	char buf[BUFSIZE];
 
 	while (1) {
-		// myPlayer ¼Û½Å
+		// myPlayer ì†¡ì‹ 
 
-		// ServerGameData ¼ö½Å
+		// ServerGameData ìˆ˜ì‹ 
 		recvn(sock, (char*)&len, sizeof(int), 0);
 		recvn(sock, buf, len, 0);
 		ServerDatas = reinterpret_cast<SendGameData*>(&buf);
-		// ¿©±â¼­ Æ÷Æ®¹øÈ£·Î? ¾î´À ÀÎµ¦½º°¡ ÀÚ½ÅÀÇ °ÍÀÎÁö ÆÇ´Ü ÈÄ ±â¾ïÇØ³õ±â
+		// ì—¬ê¸°ì„œ í¬íŠ¸ë²ˆí˜¸ë¡œ? ì–´ëŠ ì¸ë±ìŠ¤ê°€ ìì‹ ì˜ ê²ƒì¸ì§€ íŒë‹¨ í›„ ê¸°ì–µí•´ë†“ê¸°
 	}
 
 
 	// closesocket()
 	closesocket(sock);
 
-	// À©¼Ó Á¾·á
+	// ìœˆì† ì¢…ë£Œ
 	WSACleanup();
 	return 0;
 }
