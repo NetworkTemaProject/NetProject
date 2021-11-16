@@ -49,7 +49,7 @@ public:
 };
 
 //////////////////////////////////////////////////////////////////
-#define CLINET_NUM 3
+#define CLIENT_NUM 2
 
 struct InputData {
 	bool bUp = false;
@@ -63,6 +63,7 @@ struct InputData {
 struct PlayerMgr {
 	DWORD portnum;
 	CPlayer player;
+	bool Win;
 };
 
 struct SendPlayerData {

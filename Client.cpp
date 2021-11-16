@@ -163,20 +163,18 @@ GLfloat	boxN[][3] = {
 std::vector<Foothold> Bottom;
 CPlayer player;
 ///////////////////////////////////////////////////////////////////////////////////////
-#define CLINET_NUM 3
-
 struct SendGameData {
-	PlayerMgr players[CLINET_NUM];
+	PlayerMgr* PMgr;
 	clock_t ServerTime;
-	bool Win;
-	std::vector<Foothold> Bottom;
+	std::vector<Foothold>& Bottom;
 };
 
 SendPlayerData myPlayer;
-PlayerMgr players[CLINET_NUM];
+PlayerMgr players[CLIENT_NUM];
 SOCKET sock;
 SOCKADDR_IN peeraddr;
 SOCKADDR_IN serveraddr;
+SendGameData ServerDatas;
 
 #define SERVERIP "127.0.0.1"
 #define SERVERPORT 9000

@@ -6,25 +6,17 @@
 #include "Foothold.h"
 
 #define SERVERPORT 9000
-#define CLIENT_NUM 3
 
 static int custom_counter;
 vector<Foothold> Bottom;
-
-struct PlayerMgr
-{
-	DWORD portnum;
-	CPlayer player;
-};
 
 clock_t serverInit_time;
 clock_t serverPre_time;
 clock_t serverDelta_time;
 
 struct SendGameData{
-	PlayerMgr* players;
+	PlayerMgr* PMgrs;
 	clock_t ServerTime;
-	bool Win;	
 	vector<Foothold>& Bottom;
 };
 // 각 플레이어의 승패여부 확인을 위해 PlayerMgr로 옮기기??
@@ -358,7 +350,7 @@ bool IsReadytoPlay(bool isReady)
 
 void InitServerSendData()
 {
-	ServerGameData.players = Players;
+	ServerGameData.PMgrs = Players;
 	ServerGameData.Bottom = Bottom;
 	//ServerGameData.ServerTime;
 	//ServerGameData.Win;
