@@ -396,41 +396,42 @@ GLvoid drawScene()
 	glUniformMatrix4fv(projection, 1, GL_FALSE, &ptrans[0][0]);
 
 	glBindVertexArray(vao);
-	for (size_t i = 0; i < Bottom.size(); ++i)
+	for (size_t i = 0; i < ServerDatas->Bottom.size(); ++i)
 	{
-		Bottom[i].Draw_Start();
-		glUniform3f(color_location, Bottom[i].r, Bottom[i].g, Bottom[i].b);
-		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(Bottom[i].Drawing)));
-		glDrawArrays(GL_TRIANGLES, 0, Bottom[i].size);
+		ServerDatas->Bottom[i].Draw_Start();
+		glUniform3f(color_location, ServerDatas->Bottom[i].r, ServerDatas->Bottom[i].g, ServerDatas->Bottom[i].b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(ServerDatas->Bottom[i].Drawing)));
+		glDrawArrays(GL_TRIANGLES, 0, ServerDatas->Bottom[i].size);
 	}
 
-	// head
-	glUniform3f(color_location, player.head.r, player.head.g, player.head.b);
-	glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(player.head.TRS)));
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	// nose
-	glUniform3f(color_location, player.nose.r, player.nose.g, player.nose.b);
-	glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(player.nose.TRS)));
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	// body
-	glUniform3f(color_location, player.body.r, player.body.g, player.body.b);
-	glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(player.body.TRS)));
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	// arm
-	glUniform3f(color_location, player.arm_l.r, player.arm_l.g, player.arm_l.b);
-	glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(player.arm_l.TRS)));
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glUniform3f(color_location, player.arm_r.r, player.arm_r.g, player.arm_r.b);
-	glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(player.arm_r.TRS)));
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	// leg
-	glUniform3f(color_location, player.leg_l.r, player.leg_l.g, player.leg_l.b);
-	glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(player.leg_l.TRS)));
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glUniform3f(color_location, player.leg_r.r, player.leg_r.g, player.leg_r.b);
-	glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(player.leg_r.TRS)));
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-
+	for (size_t i = 0; i < CLIENT_NUM; ++i) {
+		// head
+		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.head.r, (ServerDatas->PMgr[i]).player.head.g, (ServerDatas->PMgr[i]).player.head.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.head.TRS)));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		// nose
+		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.nose.r, (ServerDatas->PMgr[i]).player.nose.g, (ServerDatas->PMgr[i]).player.nose.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.nose.TRS)));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		// body
+		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.body.r, (ServerDatas->PMgr[i]).player.body.g, (ServerDatas->PMgr[i]).player.body.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.body.TRS)));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		// arm
+		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.arm_l.r, (ServerDatas->PMgr[i]).player.arm_l.g, (ServerDatas->PMgr[i]).player.arm_l.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.arm_l.TRS)));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.arm_r.r, (ServerDatas->PMgr[i]).player.arm_r.g, (ServerDatas->PMgr[i]).player.arm_r.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.arm_r.TRS)));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		// leg
+		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.leg_l.r, (ServerDatas->PMgr[i]).player.leg_l.g, (ServerDatas->PMgr[i]).player.leg_l.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.leg_l.TRS)));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.leg_r.r, (ServerDatas->PMgr[i]).player.leg_r.g, (ServerDatas->PMgr[i]).player.leg_r.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.leg_r.TRS)));
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+	}
 	check_GameOver();
 
 	if(!game_over)
