@@ -174,7 +174,7 @@ PlayerMgr players[CLIENT_NUM];
 SOCKET sock;
 SOCKADDR_IN peeraddr;
 SOCKADDR_IN serveraddr;
-SendGameData ServerDatas;
+SendGameData* ServerDatas;
 
 #define SERVERIP "127.0.0.1"
 #define SERVERPORT 9000
@@ -182,6 +182,30 @@ SendGameData ServerDatas;
 void TimerFunc();
 void UpdateSendData();
 bool IsPlayingGame();
+
+
+////////////////////////////////////////////////////////////////////////////////////
+
+// 사용자 정의 데이터 수신 함수
+int recvn(SOCKET s, char* buf, int len, int flags)
+{
+	int received;
+	char* ptr = buf;
+	int left = len;
+
+	while (left > 0)
+	{
+		received = recv(s, ptr, left, flags);
+		if (received == SOCKET_ERROR)
+			return SOCKET_ERROR;
+		else if (received == 0) break;
+
+		left -= received;
+		ptr += received;
+	}
+
+	return (len - left);
+}
 
 /////////////////////////////////////////////////////////////////////////////////
 void init()
@@ -634,8 +658,42 @@ DWORD WINAPI ClientMain(LPVOID arg)
 {
 	int retval;
 
-	// 윈속 초기화
+	WSADATA wsa;
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+		return 1;
 
+	// socket()
+	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+	//if (sock == INVALID_SOCKET) err_quit("socket()");
+
+	// connect()
+	SOCKADDR_IN serveraddr;
+	ZeroMemory(&serveraddr, sizeof(serveraddr));
+	serveraddr.sin_family = AF_INET;
+	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
+	serveraddr.sin_port = htons(SERVERPORT);
+	retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
+
+
+	int len;
+	char buf[BUFSIZE];
+
+	while (1) {
+		// myPlayer 송신
+
+		// ServerGameData 수신
+		recvn(sock, (char*)&len, sizeof(int), 0);
+		recvn(sock, buf, len, 0);
+		ServerDatas = reinterpret_cast<SendGameData*>(&buf);
+		// 여기서 포트번호로? 어느 인덱스가 자신의 것인지 판단 후 기억해놓기
+	}
+
+
+	// closesocket()
+	closesocket(sock);
+
+	// 윈속 종료
+	WSACleanup();
 	return 0;
 }
 

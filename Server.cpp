@@ -33,7 +33,7 @@ int portnum;
 bool Win;
 
 PlayerMgr Players[CLIENT_NUM];
-SendGameData ServerGameData;
+SendGameData* ServerGameData;
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
@@ -331,6 +331,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	//CPlayer* tPlayer;
 	//for (int i = 0; i < CLIENT_NUM; ++i)
 	//	if (Players[i].threadId == GetCurretnThreadId()) tPlayer == &player[i].player;
+	// 포트넘버 or sock으로 수정필요, threadId론 클라 상에서 구분불가능
 
 	while (1)
 	{
@@ -350,8 +351,8 @@ bool IsReadytoPlay(bool isReady)
 
 void InitServerSendData()
 {
-	ServerGameData.PMgrs = Players;
-	ServerGameData.Bottom = Bottom;
+	ServerGameData->PMgrs = Players;
+	ServerGameData->Bottom = Bottom;
 	//ServerGameData.ServerTime;
 	//ServerGameData.Win;
 }

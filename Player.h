@@ -50,6 +50,7 @@ public:
 
 //////////////////////////////////////////////////////////////////
 #define CLIENT_NUM 2
+#define BUFSIZE 256
 
 struct InputData {
 	bool bUp = false;
