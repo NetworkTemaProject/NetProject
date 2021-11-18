@@ -338,7 +338,8 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 	{
 		if (custom_counter == 2)
 		{
-			cout << custom_counter;
+			cout << custom_counter << endl;
+			cout << inet_ntoa(clientAddr.sin_addr) << endl;
 			send(clientSock, (char*)custom_counter, sizeof(int), 0);
 			break;
 		}
@@ -371,8 +372,8 @@ bool IsReadytoPlay(bool isReady)
 
 void InitServerSendData()
 {
-	ServerGameData->PMgrs = Players;
-	ServerGameData->Bottom = Bottom;
+	// ServerGameData->PMgrs = Players;
+	// ServerGameData->Bottom = Bottom;
 	//ServerGameData.ServerTime;
 	//ServerGameData.Win;
 }

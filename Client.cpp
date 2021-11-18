@@ -20,7 +20,7 @@ void Timerfunction(int value);
 void make_vertexShader();
 void make_fragmentShader();
 
-void renderBitmapCharacher(float, float , float, void*, char* );
+void renderBitmapCharacher(float, float, float, void*, char*);
 void Print_word(float, float, float, float, int, char*);
 void check_GameOver();
 void Print_GameState();	// 현재 게임 상태에 따라 화면에 Title String, Waiting String, over을 출력하는 함수 
@@ -41,8 +41,8 @@ int g_window_h;
 GLuint vao, vbo[2];
 GLuint s_program;
 
-GLchar* vertexsource, * fragmentsource; 
-GLuint vertexshader, fragmentshader; 
+GLchar* vertexsource, * fragmentsource;
+GLuint vertexshader, fragmentshader;
 float theta = 0;
 float cx = 1, cy = 1, cz = 1;
 
@@ -81,7 +81,7 @@ DWORD WINAPI ClientMain(LPVOID arg);
 GLfloat	box[][3] = {
 	{ -0.5, 0, 0.5 },
 	{ 0.5, 0, 0.5 },
-	{ 0.5,1, 0.5 },	
+	{ 0.5,1, 0.5 },
 
 	{ 0.5, 1, 0.5 },
 	{ -0.5, 1, 0.5 },
@@ -95,7 +95,7 @@ GLfloat	box[][3] = {
 	{ 0.5, 0, 0.5 },
 	{ -0.5, 0, 0.5 }, // 밑면
 
-	{ -0.5,0, 0.5 }, 
+	{ -0.5,0, 0.5 },
 	{ -0.5, 1, 0.5 },
 	{ -0.5, 0, -0.5 },
 
@@ -103,7 +103,7 @@ GLfloat	box[][3] = {
 	{ -0.5, 1, -0.5 },
 	{ -0.5, 0, -0.5 }, //왼옆면 (바라보는기준)
 
-	{ -0.5, 0, -0.5 }, 
+	{ -0.5, 0, -0.5 },
 	{ 0.5, 0, -0.5 },
 	{ -0.5, 1, -0.5 },
 
@@ -128,7 +128,7 @@ GLfloat	box[][3] = {
 	{ 0.5, 0, -0.5 }, //오른옆면
 };
 GLfloat	boxN[][3] = {
-	 0.0f,  0.0f,  1.0f, 
+	 0.0f,  0.0f,  1.0f,
 	 0.0f,  0.0f,  1.0f,
 	 0.0f,  0.0f,  1.0f,
 
@@ -180,7 +180,8 @@ GLfloat	boxN[][3] = {
 std::vector<Foothold> Bottom;
 CPlayer player;
 ///////////////////////////////////////////////////////////////////////////////////////
-struct SendGameData {
+struct SendGameData
+{
 	PlayerMgr* PMgr;
 	clock_t ServerTime;
 	std::vector<Foothold>& Bottom;
@@ -255,7 +256,7 @@ void InitBuffer()
 
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER,sizeof(box), box, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(box), box, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glEnableVertexAttribArray(0);
 
@@ -286,7 +287,7 @@ int main(int argc, char** argv)
 	srand((unsigned int)time(NULL));
 
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA|GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowPosition(400, 100);
 	glutInitWindowSize(600, 600);
 	glutCreateWindow("기말");
@@ -297,7 +298,7 @@ int main(int argc, char** argv)
 	InitBuffer();
 
 	init();
-	
+
 	Init_Game();
 
 	glutDisplayFunc(drawScene);
@@ -377,12 +378,12 @@ void Time_score()
 {
 	present = clock() / 1000;
 	if (present - past)
-			score += 1;
+		score += 1;
 	past = clock() / 1000;
 }
 
-float radius = 5, camX=0,camY=0,camZ=0;
-float lx = 3.0, ly = 3.5, lz = -1.5, ltheta=0; 
+float radius = 5, camX = 0, camY = 0, camZ = 0;
+float lx = 3.0, ly = 3.5, lz = -1.5, ltheta = 0;
 float Lx = 0, Ly = 0, Lz = 0;
 float aml = 0.35f;
 
@@ -479,7 +480,7 @@ GLvoid drawScene()
 	//// 시간 처리 후 ServerData의 시간으로 변경필요 (check_bonus 함수도)
 	//Print_word(0.5f, 0.7f, 0.8f, 0.7f,tine, word2);
 	//check_Bonus();
-	
+
 	Print_GameState();
 
 	glutSwapBuffers();
@@ -487,8 +488,8 @@ GLvoid drawScene()
 
 void check_GameOver()
 {
-	if(CurrentGameState == static_cast<int>(EGameState::GAMEOVER))
-		renderBitmapCharacher(-0.2f,0.0f, 0, (void*)font, over);
+	if (CurrentGameState == static_cast<int>(EGameState::GAMEOVER))
+		renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, over);
 	else
 	{
 		if (player.y < UNDER)
@@ -529,12 +530,12 @@ void Print_GameState()
 
 void check_Bonus()
 {
-	if(cnt-p_cnt)
+	if (cnt - p_cnt)
 		if (!(cnt % 10))
-			score += cnt*5;
+			score += cnt * 5;
 
 	if (tine - p_time)
-		if (!(tine% 10))
+		if (!(tine % 10))
 			score += tine;
 
 	p_cnt = cnt;
@@ -684,8 +685,10 @@ GLvoid KeyboardUp(unsigned char key, int x, int y)
 void check_collide()
 {
 	player.fall = true;
-	for (size_t i = 0; i < Bottom.size(); ++i) {
-		if (collide_box(Bottom[i], player)) {
+	for (size_t i = 0; i < Bottom.size(); ++i)
+	{
+		if (collide_box(Bottom[i], player))
+		{
 			player.fall = false;
 			player.dy = 0;
 			Bottom[i].startDel = true;
@@ -693,7 +696,8 @@ void check_collide()
 		}
 	}
 
-	for (size_t i = 0; i < Bottom.size(); ++i) {
+	for (size_t i = 0; i < Bottom.size(); ++i)
+	{
 		if (Bottom[i].Del)
 			Bottom.erase(Bottom.begin() + i);
 	}
@@ -713,7 +717,7 @@ bool collide_box(Foothold bottom, CPlayer& player)
 	b_maxZ = bottom.mz + 0.4f; b_minZ = bottom.mz - 0.4f;
 
 	if (b_maxX < p_minX || b_minX > p_maxX)
-		return false;  
+		return false;
 	if (b_maxZ < p_minZ || b_minZ > p_maxZ)
 		return false;
 	if (b_maxY < p_minY || b_minY > p_maxY)
@@ -733,14 +737,16 @@ void Init_Game()
 	Bottom.clear();
 	MakeFoothold(Bottom);
 
-	for (int i = 0; i < 5; ++i) {
+	for (int i = 0; i < 5; ++i)
+	{
 		Bottom[rand() % 25].Del = true;
 		Bottom[rand() % 25 + 25].Del = true;
 		Bottom[rand() % 25 + 50].Del = true;
 		Bottom[rand() % 25 + 75].Del = true;
 		Bottom[rand() % 25 + 100].Del = true;
 	}
-	for (int i = Bottom.size() - 1; i >= 0; --i) {
+	for (int i = Bottom.size() - 1; i >= 0; --i)
+	{
 		if (Bottom[i].Del)
 		{
 			Bottom.erase(Bottom.begin() + i);
@@ -794,7 +800,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 	// socket()
 	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock == INVALID_SOCKET) 
+	if (sock == INVALID_SOCKET)
 		err_quit("socket()");
 
 	// connect()
@@ -804,21 +810,33 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
 
-	if (CurrentGameState == static_cast<int>(EGameState::WAITING))
+	while (1)
 	{
-		retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
-		if (retval == SOCKET_ERROR)
-			err_quit("connect()");
+		if (CurrentGameState == static_cast<int>(EGameState::WAITING))
+		{
+			retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
+			if (retval == SOCKET_ERROR)
+				err_quit("connect()");
+			break;
+		}
 	}
 
 	int CurrentPlayerNum = 0;
-	recvn(sock, (char*)&CurrentPlayerNum, sizeof(int), 0);
-	CurrentGameState = static_cast<int>(EGameState::PLAYING);
+	while (1)
+	{
+		recvn(sock, (char*)&CurrentPlayerNum, sizeof(int), 0);
+		if (CurrentPlayerNum == 2)
+		{
+			CurrentGameState = static_cast<int>(EGameState::PLAYING);
+			break;
+		}
+	}
 
 	int len;
 	char buf[BUFSIZE];
 
-	while (1) {
+	while (1)
+	{
 		// myPlayer 송신
 
 		// ServerGameData 수신
