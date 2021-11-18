@@ -332,9 +332,15 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	//	if (Players[i].threadId == GetCurretnThreadId()) tPlayer == &player[i].player;
 	// 포트넘버 or sock으로 수정필요, threadId론 클라 상에서 구분불가능
 
+	SendPlayerData ClientData;
+	int nClientDataLen;
 	while (1)
 	{
-		//UpdatePlayerLocation(*tPlayer,PlayerMgr.input);
+		recvn(client_sock, (char*)&nClientDataLen, sizeof(int), 0);
+		recvn(client_sock, (char*)&ClientData, nClientDataLen, 0);
+		// ClientData = reinterpret_cast<SendPlayerData*>(&buf);
+		
+		//UpdatePlayerLocation(*tPlayer, ClientData.Input);
 		//UpdateFootholdbyPlayer(*tPlayer);
 		CheckCollideFoothold();
 		int nServerDataLen = sizeof(SendGameData);

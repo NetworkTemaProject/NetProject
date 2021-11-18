@@ -691,13 +691,15 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	int len;
 	char buf[BUFSIZE];
 
+	int nClientDataLen = sizeof(SendPlayerData);
 	while (1) {
 		// myPlayer 송신
-
+		send(sock, (char*)&nClientDataLen, sizeof(int), 0);
+		send(sock, (char*)&myPlayer, nClientDataLen, 0);
 		// ServerGameData 수신
 		recvn(sock, (char*)&len, sizeof(int), 0);
-		recvn(sock, buf, len, 0);
-		ServerDatas = reinterpret_cast<SendGameData*>(&buf);
+		recvn(sock, (char*)&ServerDatas, len, 0);
+		//ServerDatas = reinterpret_cast<SendGameData*>(&buf); -> 기존내용 안돌아가면 이걸로 테스트
 		// 여기서 포트번호로? 어느 인덱스가 자신의 것인지 판단 후 기억해놓기
 	}
 
