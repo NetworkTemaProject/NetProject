@@ -7,7 +7,7 @@
 
 #define SERVERPORT 9000
 
-static int custom_counter;
+volatile int custom_counter = 0;
 vector<Foothold> Bottom;
 
 clock_t serverInit_time;
@@ -30,8 +30,6 @@ bool isPlayingGame;
 int portnum;
 
 bool Win;
-
-int CurrentPlayerNum{};
 
 PlayerMgr Players[CLIENT_NUM];
 SendGameData* ServerGameData;
@@ -159,14 +157,11 @@ int main(int argc, char* argv[])
 			break;
 		}
 
-		++CurrentPlayerNum;
-		cout << CurrentPlayerNum;
 		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_sock, 0, NULL);
 
 		if (IsOkGameStart(++custom_counter))
 		{
 			ServerInit();
-			break;
 		}
 		
 
@@ -217,7 +212,7 @@ void CreateMainGameScene()
 void UpdateFootholdbyPlayer(CPlayer& player)
 {
 	player.fall = true;
-	for (int i = 0; i < Bottom.size(); ++i) {
+	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (IsCollideFootholdByPlayer(Bottom[i], player)) {
 			player.fall = false;
 			player.dy = 0;
@@ -229,12 +224,12 @@ void UpdateFootholdbyPlayer(CPlayer& player)
 
 void CheckCollideFoothold()
 {
-	for (int i = 0; i < Bottom.size(); ++i) {
+	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (Bottom[i].Del)
 			Bottom.erase(Bottom.begin() + i);
 	}
 
-	for (int i = 0; i < Bottom.size(); ++i) {
+	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (Bottom[i].startDel)
 			Bottom[i].Delete();
 	}
@@ -255,13 +250,13 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player)
 	float b_maxX, b_minX, p_maxX, p_minX;
 	float b_maxY, b_minY, p_maxY, p_minY;
 	float b_maxZ, b_minZ, p_maxZ, p_minZ;
-	p_maxX = player.x + 0.15; p_minX = player.x - 0.15;
-	p_maxY = player.y + 0.1; p_minY = player.y - 0.1;
-	p_maxZ = player.z + 0.15; p_minZ = player.z - 0.15;
+	p_maxX = player.x + 0.15f; p_minX = player.x - 0.15f;
+	p_maxY = player.y + 0.1f; p_minY = player.y - 0.1f;
+	p_maxZ = player.z + 0.15f; p_minZ = player.z - 0.15f;
 
-	b_maxX = foot.mx + 0.4; b_minX = foot.mx - 0.4;
-	b_maxY = foot.my + 0.35; b_minY = foot.my + 0.25;
-	b_maxZ = foot.mz + 0.4; b_minZ = foot.mz - 0.4;
+	b_maxX = foot.mx + 0.4f; b_minX = foot.mx - 0.4f;
+	b_maxY = foot.my + 0.35f; b_minY = foot.my + 0.25f;
+	b_maxZ = foot.mz + 0.4f; b_minZ = foot.mz - 0.4f;
 
 	if (b_maxX < p_minX || b_minX > p_maxX)
 		return false;
@@ -269,7 +264,7 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player)
 		return false;
 	if (b_maxY < p_minY || b_minY > p_maxY)
 		return false;
-	player.y = foot.my + 0.3;
+	player.y = foot.my + 0.3f;
 	return true;
 }
 
@@ -339,11 +334,14 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 	addrlen = sizeof(clientAddr);
 	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
 
-	while (CurrentPlayerNum < 2)
+	while (1)
 	{
-		cout << CurrentPlayerNum << endl;
-		if (CurrentPlayerNum != 0)
-			send(clientSock, (char*)CurrentPlayerNum, sizeof(int), 0);
+		if (custom_counter == 2)
+		{
+			cout << custom_counter;
+			send(clientSock, (char*)custom_counter, sizeof(int), 0);
+			break;
+		}
 	}
 
 	// 플레이어 구분 후 좌표업데이트
