@@ -8,6 +8,7 @@
 #include "Player.h"
 #define pi 3.141592
 
+using namespace std;
 
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
@@ -22,7 +23,7 @@ void make_fragmentShader();
 void renderBitmapCharacher(float, float , float, void*, char* );
 void Print_word(float, float, float, float, int, char*);
 void check_GameOver();
-void Print_GameState();	// 현재 게임 상태에 따라 화면에 Title String, Wating String, over을 출력하는 함수 
+void Print_GameState();	// 현재 게임 상태에 따라 화면에 Title String, Waiting String, over을 출력하는 함수 
 void check_Bonus();
 
 void check_collide();
@@ -31,7 +32,8 @@ void Time_score();
 
 void Init_Game();
 
-using namespace std;
+void err_quit(const char* msg); // 소켓 함수 오류 출력 후 종료
+void err_display(const char* msg); // 소켓 함수 오류 출력
 
 int g_window_w;
 int g_window_h;
@@ -56,7 +58,7 @@ char word1[10] = "score:";
 char word2[11] = "life time:";
 char over[10] = "Game Over";
 char TitleString[16] = "Press Enter Key";
-char WaitString[12] = "Wating. . .";
+char WaitString[13] = "Waiting. . .";
 
 clock_t past;
 clock_t present;
@@ -67,7 +69,7 @@ bool game_over = false; // 대기 화면인가? 게임중인가? 게임이 끝�
 enum class EGameState
 {
 	TITLE,
-	WATING,
+	WAITING,
 	PLAYING,
 	GAMEOVER
 };
@@ -318,7 +320,7 @@ void Timerfunction(int value)
 			cout << TitleString << endl;
 			break;
 		}
-		case static_cast<int>(EGameState::WATING):
+		case static_cast<int>(EGameState::WAITING):
 		{
 			// TODO: 서버와 연결 후 입장 인원이 2명이 될 때까지 대기
 			cout << WaitString << endl;
@@ -507,7 +509,7 @@ void Print_GameState()
 			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, TitleString);
 			break;
 		}
-		case static_cast<int>(EGameState::WATING):
+		case static_cast<int>(EGameState::WAITING):
 		{
 			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, WaitString);
 			break;
@@ -517,6 +519,9 @@ void Print_GameState()
 			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, over);
 			break;
 		}
+		case static_cast<int>(EGameState::PLAYING):
+			char playing[8] = "Playing";
+			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, playing);
 		default:
 			break;
 	}
@@ -551,7 +556,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		{
 			if (CurrentGameState == static_cast<int>(EGameState::TITLE))
 			{
-				CurrentGameState = static_cast<int>(EGameState::WATING);
+				CurrentGameState = static_cast<int>(EGameState::WAITING);
 				glutTimerFunc(50, Timerfunction, 1);
 			}
 			else if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
@@ -753,6 +758,31 @@ void Init_Game()
 	glutTimerFunc(50, Timerfunction, 1);
 }
 
+void err_quit(const char* msg)
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+	MessageBox(NULL, (LPCTSTR)lpMsgBuf, msg, MB_ICONERROR);
+	LocalFree(lpMsgBuf);
+	exit(1);
+}
+
+void err_display(const char* msg)
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+	printf("[%s] %s", msg, (char*)lpMsgBuf);
+	LocalFree(lpMsgBuf);
+}
+
 DWORD WINAPI ClientMain(LPVOID arg)
 {
 	int retval;
@@ -763,7 +793,8 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 	// socket()
 	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-	//if (sock == INVALID_SOCKET) err_quit("socket()");
+	if (sock == INVALID_SOCKET) 
+		err_quit("socket()");
 
 	// connect()
 	SOCKADDR_IN serveraddr;
@@ -771,8 +802,13 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	serveraddr.sin_family = AF_INET;
 	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
-	retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
-
+	
+	if (CurrentGameState == static_cast<int>(EGameState::WAITING))
+	{
+		retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
+		if (retval == SOCKET_ERROR)
+			err_quit("connect()");
+	}
 
 	int len;
 	char buf[BUFSIZE];
