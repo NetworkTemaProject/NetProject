@@ -2,6 +2,7 @@
 #pragma comment(lib,"ws2_32")
 #include <WinSock2.h>
 #include <iostream>
+#include <map>
 #include "Player.h"
 #include "Foothold.h"
 
@@ -32,6 +33,8 @@ int portnum;
 bool Win;
 
 PlayerMgr Players[CLIENT_NUM];
+map<DWORD, PlayerMgr&> ClientManager;
+
 SendGameData* ServerGameData;
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
@@ -50,8 +53,6 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player);
 bool IsCollidePlayerByPlayer(CPlayer& a, CPlayer& b);
 
 void CheckCollidePlayers();
-void UpdatePlayerLocation(CPlayer& p, InputData& input);
-void UpdateFootholdbyPlayer(CPlayer& player);
 void InitServerSendData();
 void UpdateClientKeyInput();
 void CheckGameOver();
@@ -60,6 +61,11 @@ void FootHoldInit();
 void PlayerInit();
 bool IsReadytoPlay(bool isReady);
 DWORD WINAPI ProcessClient(LPVOID arg);
+
+void UpdatePlayerLocation(CPlayer& p, InputData& input);
+void UpdateFootholdbyPlayer(CPlayer& player);
+void SettingPlayersMine(DWORD ThreadId);
+void CheckInsertPlayerMgrData(DWORD ThreadId);
 
 // 소켓 함수 오류 출력 후 종료
 void err_quit(const char* msg)
