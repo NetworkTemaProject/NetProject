@@ -810,6 +810,14 @@ DWORD WINAPI ClientMain(LPVOID arg)
 			err_quit("connect()");
 	}
 
+	int CurrentPlayerNum{};
+	while (CurrentPlayerNum < 2)
+	{
+		recvn(sock, (char*)&CurrentPlayerNum, sizeof(int), 0);
+	}
+
+	CurrentGameState = static_cast<int>(EGameState::PLAYING);
+
 	int len;
 	char buf[BUFSIZE];
 
