@@ -160,6 +160,10 @@ int main(int argc, char* argv[])
 			break;
 		}
 
+		// 신호 상태
+		hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+		if (hFootholdEvent == NULL) return 1;
+
 		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_sock, 0, NULL);
 
 		if (IsOkGameStart(++custom_counter))
@@ -335,6 +339,9 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	int nClientDataLen;
 	while (1)
 	{
+		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
+		if (retval != WAIT_OBJECT_0) break;
+
 		DWORD threadId = GetCurrentThreadId();
 		CheckInsertPlayerMgrData(threadId);
 
@@ -349,6 +356,8 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		int nServerDataLen = sizeof(SendGameData);
 		send(client_sock, (char*)&nServerDataLen, sizeof(int), 0);
 		send(client_sock,(char*)&ServerGameData, nServerDataLen, 0);
+
+		SetEvent(hFootholdEvent);
 	}
 }
 
