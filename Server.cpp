@@ -31,6 +31,8 @@ int portnum;
 
 bool Win;
 
+int CurrentPlayerNum{};
+
 PlayerMgr Players[CLIENT_NUM];
 SendGameData* ServerGameData;
 
@@ -122,7 +124,8 @@ int main(int argc, char* argv[])
 
 	// socket()
 	SOCKET listen_sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (listen_sock == INVALID_SOCKET) err_quit("socket()");
+	if (listen_sock == INVALID_SOCKET) 
+		err_quit("socket()");
 
 	// bind()
 	SOCKADDR_IN serveraddr;
@@ -131,11 +134,13 @@ int main(int argc, char* argv[])
 	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serveraddr.sin_port = htons(SERVERPORT);
 	retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
-	if (retval == SOCKET_ERROR) err_quit("bind()");
+	if (retval == SOCKET_ERROR) 
+		err_quit("bind()");
 
 	// listen()
 	retval = listen(listen_sock, SOMAXCONN);
-	if (retval == SOCKET_ERROR) err_quit("listen()");
+	if (retval == SOCKET_ERROR) 
+		err_quit("listen()");
 
 	// 데이터 통신에 사용할 변수
 	SOCKADDR_IN clientaddr;
@@ -154,6 +159,8 @@ int main(int argc, char* argv[])
 			break;
 		}
 
+		++CurrentPlayerNum;
+		cout << CurrentPlayerNum;
 		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_sock, 0, NULL);
 
 		if (IsOkGameStart(++custom_counter))
@@ -323,8 +330,22 @@ void PlayerInit()
 	}
 }
 
-DWORD __stdcall ProcessClient(LPVOID arg)
+DWORD WINAPI ProcessClient(LPVOID arg)
 {
+	SOCKET clientSock = (SOCKET)arg;
+	SOCKADDR_IN clientAddr = {};
+	int addrlen = 0;
+
+	addrlen = sizeof(clientAddr);
+	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
+
+	while (CurrentPlayerNum < 2)
+	{
+		cout << CurrentPlayerNum << endl;
+		if (CurrentPlayerNum != 0)
+			send(clientSock, (char*)CurrentPlayerNum, sizeof(int), 0);
+	}
+
 	// 플레이어 구분 후 좌표업데이트
 	
 	//CPlayer* tPlayer;
@@ -332,20 +353,22 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	//	if (Players[i].threadId == GetCurretnThreadId()) tPlayer == &player[i].player;
 	// 포트넘버 or sock으로 수정필요, threadId론 클라 상에서 구분불가능
 
-	while (1)
-	{
-		//UpdatePlayerLocation(*tPlayer,PlayerMgr.input);
-		//UpdateFootholdbyPlayer(*tPlayer);
-		CheckCollideFoothold();
-		int nServerDataLen = sizeof(SendGameData);
-		send(client_sock, (char*)&nServerDataLen, sizeof(int), 0);
-		send(client_sock,(char*)&ServerGameData, nServerDataLen, 0);
-	}
+	//while (1)
+	//{
+	//	//UpdatePlayerLocation(*tPlayer,PlayerMgr.input);
+	//	//UpdateFootholdbyPlayer(*tPlayer);
+	//	CheckCollideFoothold();
+	//	int nServerDataLen = sizeof(SendGameData);
+	//	send(clientSock, (char*)&nServerDataLen, sizeof(int), 0);
+	//	send(clientSock,(char*)&ServerGameData, nServerDataLen, 0);
+	//}
+
+	return 0;
 }
 
 bool IsReadytoPlay(bool isReady)
 {
-
+	return true;
 }
 
 void InitServerSendData()
