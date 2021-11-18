@@ -331,24 +331,21 @@ void PlayerInit()
 
 DWORD __stdcall ProcessClient(LPVOID arg)
 {
-	// 플레이어 구분 후 좌표업데이트
-	
-	//CPlayer* tPlayer;
-	//for (int i = 0; i < CLIENT_NUM; ++i)
-	//	if (Players[i].threadId == GetCurretnThreadId()) tPlayer == &player[i].player;
-	// 포트넘버 or sock으로 수정필요, threadId론 클라 상에서 구분불가능
-
 	SendPlayerData ClientData;
 	int nClientDataLen;
 	while (1)
 	{
+		DWORD threadId = GetCurrentThreadId();
+		CheckInsertPlayerMgrData(threadId);
+
 		recvn(client_sock, (char*)&nClientDataLen, sizeof(int), 0);
-		recvn(client_sock, (char*)&ClientData, nClientDataLen, 0);
-		// ClientData = reinterpret_cast<SendPlayerData*>(&buf);
-		
-		//UpdatePlayerLocation(*tPlayer, ClientData.Input);
-		//UpdateFootholdbyPlayer(*tPlayer);
+		recvn(client_sock, (char*)&ClientData, nClientDataLen, 0);	
+			
+		SettingPlayersMine(threadId);
+		UpdatePlayerLocation(ClientManager[threadId].player, ClientData.Input);
+		UpdateFootholdbyPlayer(ClientManager[threadId].player);
 		CheckCollideFoothold();
+		
 		int nServerDataLen = sizeof(SendGameData);
 		send(client_sock, (char*)&nServerDataLen, sizeof(int), 0);
 		send(client_sock,(char*)&ServerGameData, nServerDataLen, 0);
@@ -366,4 +363,28 @@ void InitServerSendData()
 	ServerGameData->Bottom = Bottom;
 	//ServerGameData.ServerTime;
 	//ServerGameData.Win;
+}
+
+// 클라이언트에서 자신의 정보와 타인의 정보 구분을 위한 멤버변수 세팅을 위한 함수
+void SettingPlayersMine(DWORD ThreadId)
+{
+	for (int i = 0; i < CLIENT_NUM; ++i)
+		ServerGameData->PMgrs[i].mine = false;
+	ClientManager[ThreadId].mine = true;
+}
+
+// threadId를 통해서 플레이어 구분해서 map으로 관리
+void CheckInsertPlayerMgrData(DWORD ThreadId)
+{
+	auto manager = ClientManager.find(ThreadId);
+	if (manager == ClientManager.end()) {
+
+		for (int i = 0; i < CLIENT_NUM; ++i) {
+			if (!ServerGameData->PMgrs[i].threadId)
+			{
+				ServerGameData->PMgrs[i].threadId = ThreadId;
+				ClientManager.insert({ ThreadId, ServerGameData->PMgrs[i] });
+			}
+		}
+	}
 }
