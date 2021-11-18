@@ -190,7 +190,7 @@ SendGameData* ServerDatas;
 void TimerFunc();
 void UpdateSendData();
 bool IsPlayingGame();
-
+int myIndex = -1;
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -394,7 +394,10 @@ GLvoid drawScene()
 	camY = +0.0;
 	camZ = -1 * (float)cos(theta / 180 * 3.141592) * radius;
 	// 자신의 플레이어 인덱스 구분을 통해서 출력 위치 변경필요
-	vtrans = glm::lookAt(glm::vec3(player.x, player.y + 2, player.z + 2), glm::vec3(player.x, player.y, player.z), glm::vec3(0.0f, 1.0f, 0.0f));
+	
+	if(myIndex != -1)
+		vtrans = glm::lookAt(glm::vec3((ServerDatas->PMgr[myIndex]).player.x, (ServerDatas->PMgr[myIndex]).player.y + 2, (ServerDatas->PMgr[myIndex]).player.z + 2),
+		glm::vec3((ServerDatas->PMgr[myIndex]).player.x, (ServerDatas->PMgr[myIndex]).player.y, (ServerDatas->PMgr[myIndex]).player.z), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	unsigned int view = glGetUniformLocation(s_program, "view");
 	glUniformMatrix4fv(view, 1, GL_FALSE, &vtrans[0][0]);
@@ -448,8 +451,9 @@ GLvoid drawScene()
 		Time_score();
 
 	tine = present - start;
-	// 플레이어 인덱스 구분을 통해서 자신의 점수만 출력
-	Print_word(0.5f, 0.8f, 0.7f, 0.8f, score,word1);
+
+	if(myIndex != -1)
+		Print_word(0.5f, 0.8f, 0.7f, 0.8f, (ServerDatas->PMgr[myIndex]).player.m_nScore,word1);
 	// 시간 처리 후 ServerData의 시간으로 변경필요 (check_bonus 함수도)
 	Print_word(0.5f, 0.7f, 0.8f, 0.7f,tine, word2);
 	check_Bonus();
@@ -687,7 +691,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	serveraddr.sin_port = htons(SERVERPORT);
 	retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
 
-
 	int len;
 	char buf[BUFSIZE];
 
@@ -699,10 +702,11 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		// ServerGameData 수신
 		recvn(sock, (char*)&len, sizeof(int), 0);
 		recvn(sock, (char*)&ServerDatas, len, 0);
-		//ServerDatas = reinterpret_cast<SendGameData*>(&buf); -> 기존내용 안돌아가면 이걸로 테스트
-		// 여기서 포트번호로? 어느 인덱스가 자신의 것인지 판단 후 기억해놓기
-	}
 
+		for (int i = 0; i < CLIENT_NUM; ++i)
+			if (ServerDatas->PMgr[i].mine) myIndex = i;
+		//ServerDatas = reinterpret_cast<SendGameData*>(&buf); -> 기존내용 안돌아가면 이걸로 테스트
+	}
 
 	// closesocket()
 	closesocket(sock);
