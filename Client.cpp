@@ -354,12 +354,6 @@ void Timerfunction(int value)
 			break;
 		}
 	}
-
-	
-	// glutPostRedisplay();
-
-	/*if (!game_over)
-		glutTimerFunc(50, Timerfunction, 1);*/
 }
 
 void renderBitmapCharacher(float x, float y, float z, void* font, char* string)
@@ -493,12 +487,14 @@ GLvoid drawScene()
 
 void check_GameOver()
 {
-	if(game_over)
+	if(CurrentGameState == static_cast<int>(EGameState::GAMEOVER))
 		renderBitmapCharacher(-0.2f,0.0f, 0, (void*)font, over);
 	else
 	{
 		if (player.y < UNDER)
-			game_over = true;
+		{
+			CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
+		}
 	}
 }
 
@@ -549,113 +545,131 @@ GLvoid Reshape(int w, int h)
 
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
-	// TODO: CurrentGameState에 따라 키 입력받는 것 달라지도록 변경하기.
-	if (CurrentGameState == static_cast<int>(EGameState::TITLE))
+	switch (key)
 	{
-		switch (key)
+		case VK_RETURN:
 		{
-			case VK_RETURN:
+			if (CurrentGameState == static_cast<int>(EGameState::TITLE))
 			{
 				CurrentGameState = static_cast<int>(EGameState::WATING);
 				glutTimerFunc(50, Timerfunction, 1);
-				break;
 			}
+			else if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
+			{
+				myPlayer.Input.bEnter = true;
+			}
+			break;
+		}
+		case 'R':
+		{
+			if (CurrentGameState == static_cast<int>(EGameState::GAMEOVER))
+			{
+				Init_Game();
+			}
+			break;
+		}
+		case 'Q':
+		{
+			exit(0);
+			break;
+		}
+		case 'w':
+		{
+			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
+			{
+				myPlayer.Input.bUp = true;
+			}
+			break;
+		}
+		case 'a':
+		{
+			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
+			{
+				myPlayer.Input.bLeft = true;
+			}
+			break;
+		}
+		case 's':
+		{
+			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
+			{
+				myPlayer.Input.bDown = true;
+			}
+			break;
+		}
+		case 'd':
+		{
+			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
+			{
+				myPlayer.Input.bRight = true;
+			}
+			break;
+		}
+		case 32:
+		{
+			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
+			{
+				myPlayer.Input.bSpace = true;
+			}
+			break;
+		}
+		case 'p':
+		{
+			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
+			{
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			}
+			break;
+		}
+		case 'P':
+		{
+			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
+			{
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			}
+			break;
 		}
 	}
 
-	if (game_over) {
-		switch (key) {
-			case 'R':
-			{
-				Init_Game();
-				break;
-			}
-			case 'Q':
-			{
-				exit(0);
-				break;
-			}
-		}
-	}
-	else {
-		switch (key)
-		{
-			case 'w':
-			{
-				myPlayer.Input.bUp = true;
-				break;
-			}
-			case 'a':
-			{
-				myPlayer.Input.bLeft = true;
-				break;
-			}
-			case 's':
-			{
-				myPlayer.Input.bDown = true;
-				break;
-			}
-			case 'd':
-			{
-				myPlayer.Input.bRight = true;
-				break;
-			}
-			case 32:
-			{
-				myPlayer.Input.bSpace = true;
-				break;
-			}
-			case 13:
-			{
-				myPlayer.Input.bEnter = true;
-				break; 
-			}
-			case 'p':
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				break;
-			case 'P':
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-				break;
-			case 'Q':
-				exit(0);
-				break;
-		}
-	}
 	glutPostRedisplay();
 }
 
 GLvoid KeyboardUp(unsigned char key, int x, int y)
 {
-	switch (key){
-		case 'w':
+	if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
+	{
+		switch (key)
 		{
-			myPlayer.Input.bUp = false;
-			break;
-		}
-		case 's':
-		{
-			myPlayer.Input.bDown = false;
-			break;
-		}
-		case 'a':
-		{
-			myPlayer.Input.bLeft = false;
-			break;
-		}
-		case 'd':
-		{			
-			myPlayer.Input.bRight = false;
-			break;
-		}
-		case 32:
-		{
-			myPlayer.Input.bSpace = false;
-			break;
-		}
-		case 13:
-		{
-			myPlayer.Input.bEnter = false;
-			break;
+			case 'w':
+			{
+				myPlayer.Input.bUp = false;
+				break;
+			}
+			case 's':
+			{
+				myPlayer.Input.bDown = false;
+				break;
+			}
+			case 'a':
+			{
+				myPlayer.Input.bLeft = false;
+				break;
+			}
+			case 'd':
+			{
+				myPlayer.Input.bRight = false;
+				break;
+			}
+			case 32:
+			{
+				myPlayer.Input.bSpace = false;
+				break;
+			}
+			case 13:
+			{
+				myPlayer.Input.bEnter = false;
+				break;
+			}
 		}
 	}
 	glutPostRedisplay();
