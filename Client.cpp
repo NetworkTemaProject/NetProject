@@ -457,7 +457,7 @@ GLvoid drawScene()
 	}
 	check_GameOver();
 
-	if(!game_over)
+	if(CurrentGameState == static_cast<int>(EGameState::PLAYING))
 		Time_score();
 
 	tine = present - start;
