@@ -306,25 +306,6 @@ void Timerfunction(int value)
 {
 	// EGameState에 따라서 화면에 그리는 것이 달라지도록 만들기!
 
-	player.Update();
-	check_collide();
-
-	for (size_t i = 0; i < Bottom.size(); ++i)
-	{
-		if (Bottom[i].startDel)
-			Bottom[i].Delete();
-	}
-
-	for (int i = Bottom.size() - 1; i >= 0; --i)
-	{
-		if (Bottom[i].Del)
-		{
-			score += Bottom[i].score;
-			++cnt;
-			Bottom.erase(Bottom.begin() + i);
-		}
-	}
-
 	glutPostRedisplay();
 
 	if (!game_over)

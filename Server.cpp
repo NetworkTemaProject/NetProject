@@ -291,6 +291,7 @@ void UpdatePlayerLocation(CPlayer& p, InputData& input)
 	if (input.bDown) p.dz = 0.1f;
 	if (input.bLeft) p.dx = -0.1f;
 	if (input.bRight) p.dx = 0.1f;
+	if (input.bSpace) p.Jump();
 
 	// 업데이트 중인지 판단 -> dx dz로 판단
 	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
@@ -350,6 +351,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 			
 		SettingPlayersMine(threadId);
 		UpdatePlayerLocation(ClientManager[threadId].player, ClientData.Input);
+		ClientManager[threadId].player.Update();
 		UpdateFootholdbyPlayer(ClientManager[threadId].player);
 		CheckCollideFoothold();
 		

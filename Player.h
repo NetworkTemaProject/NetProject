@@ -58,7 +58,6 @@ struct InputData {
 	bool bLeft = false;
 	bool bDown = false;
 	bool bSpace = false;
-	bool bEnter = false;
 };
 
 struct PlayerMgr {
