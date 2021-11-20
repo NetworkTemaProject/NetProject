@@ -8,7 +8,7 @@
 
 #define SERVERPORT 9000
 
-static int custom_counter;
+volatile int custom_counter = 0;
 vector<Foothold> Bottom;
 
 clock_t serverInit_time;
@@ -128,7 +128,8 @@ int main(int argc, char* argv[])
 
 	// socket()
 	SOCKET listen_sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (listen_sock == INVALID_SOCKET) err_quit("socket()");
+	if (listen_sock == INVALID_SOCKET) 
+		err_quit("socket()");
 
 	// bind()
 	SOCKADDR_IN serveraddr;
@@ -137,11 +138,13 @@ int main(int argc, char* argv[])
 	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serveraddr.sin_port = htons(SERVERPORT);
 	retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
-	if (retval == SOCKET_ERROR) err_quit("bind()");
+	if (retval == SOCKET_ERROR) 
+		err_quit("bind()");
 
 	// listen()
 	retval = listen(listen_sock, SOMAXCONN);
-	if (retval == SOCKET_ERROR) err_quit("listen()");
+	if (retval == SOCKET_ERROR) 
+		err_quit("listen()");
 
 	// 데이터 통신에 사용할 변수
 	SOCKADDR_IN clientaddr;
@@ -169,7 +172,6 @@ int main(int argc, char* argv[])
 		if (IsOkGameStart(++custom_counter))
 		{
 			ServerInit();
-			break;
 		}
 		
 
@@ -220,7 +222,7 @@ void CreateMainGameScene()
 void UpdateFootholdbyPlayer(CPlayer& player)
 {
 	player.fall = true;
-	for (int i = 0; i < Bottom.size(); ++i) {
+	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (IsCollideFootholdByPlayer(Bottom[i], player)) {
 			player.fall = false;
 			player.dy = 0;
@@ -232,12 +234,12 @@ void UpdateFootholdbyPlayer(CPlayer& player)
 
 void CheckCollideFoothold()
 {
-	for (int i = 0; i < Bottom.size(); ++i) {
+	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (Bottom[i].Del)
 			Bottom.erase(Bottom.begin() + i);
 	}
 
-	for (int i = 0; i < Bottom.size(); ++i) {
+	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (Bottom[i].startDel)
 			Bottom[i].Delete();
 	}
@@ -258,13 +260,13 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player)
 	float b_maxX, b_minX, p_maxX, p_minX;
 	float b_maxY, b_minY, p_maxY, p_minY;
 	float b_maxZ, b_minZ, p_maxZ, p_minZ;
-	p_maxX = player.x + 0.15; p_minX = player.x - 0.15;
-	p_maxY = player.y + 0.1; p_minY = player.y - 0.1;
-	p_maxZ = player.z + 0.15; p_minZ = player.z - 0.15;
+	p_maxX = player.x + 0.15f; p_minX = player.x - 0.15f;
+	p_maxY = player.y + 0.1f; p_minY = player.y - 0.1f;
+	p_maxZ = player.z + 0.15f; p_minZ = player.z - 0.15f;
 
-	b_maxX = foot.mx + 0.4; b_minX = foot.mx - 0.4;
-	b_maxY = foot.my + 0.35; b_minY = foot.my + 0.25;
-	b_maxZ = foot.mz + 0.4; b_minZ = foot.mz - 0.4;
+	b_maxX = foot.mx + 0.4f; b_minX = foot.mx - 0.4f;
+	b_maxY = foot.my + 0.35f; b_minY = foot.my + 0.25f;
+	b_maxZ = foot.mz + 0.4f; b_minZ = foot.mz - 0.4f;
 
 	if (b_maxX < p_minX || b_minX > p_maxX)
 		return false;
@@ -272,7 +274,7 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player)
 		return false;
 	if (b_maxY < p_minY || b_minY > p_maxY)
 		return false;
-	player.y = foot.my + 0.3;
+	player.y = foot.my + 0.3f;
 	return true;
 }
 
@@ -334,8 +336,26 @@ void PlayerInit()
 	}
 }
 
-DWORD __stdcall ProcessClient(LPVOID arg)
+DWORD WINAPI ProcessClient(LPVOID arg)
 {
+	SOCKET clientSock = (SOCKET)arg;
+	SOCKADDR_IN clientAddr = {};
+	int addrlen = 0;
+
+	addrlen = sizeof(clientAddr);
+	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
+
+	while (1)
+	{
+		if (custom_counter == 2)
+		{
+			cout << custom_counter << endl;
+			cout << inet_ntoa(clientAddr.sin_addr) << endl;
+			send(clientSock, (char*)custom_counter, sizeof(int), 0);
+			break;
+		}
+	}
+
 	SendPlayerData ClientData;
 	int nClientDataLen;
 	while (1)
@@ -361,11 +381,12 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 		SetEvent(hFootholdEvent);
 	}
+	return 0;
 }
 
 bool IsReadytoPlay(bool isReady)
 {
-
+	return true;
 }
 
 void InitServerSendData()

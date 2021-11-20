@@ -26,16 +26,16 @@ void Foothold::Draw_Start() {
 void  Foothold::Delete() {
 	switch (ani) {
 	case 0:
-		cx -= 0.1;
-		cz -= 0.1;
+		cx -= 0.1f;
+		cz -= 0.1f;
 		if (cx <= 0 && cz <= 0)
 			Del = TRUE;
 		break;
 
 	case 1:
-		r += 0.05;
-		g += 0.05;
-		b += 0.05;
+		r += 0.05f;
+		g += 0.05f;
+		b += 0.05f;
 		if (r >= 1 && g >= 1 && b >= 1)
 			Del = TRUE;
 		break;
@@ -59,7 +59,7 @@ void  Foothold::Delete() {
 		break;
 
 	case 4:
-		my -= 0.05;
+		my -= 0.05f;
 		++cnt;
 		
 		if (cnt >= 15)
@@ -70,7 +70,7 @@ void  Foothold::Delete() {
 
 void MakeFoothold(vector<Foothold> &Bottom)
 {
-	srand(time(0));
+	srand((unsigned int)time(NULL));
 	float r, g, b;
 
 	for (int k = 0; k < N; ++k) {
