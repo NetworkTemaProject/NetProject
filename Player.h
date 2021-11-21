@@ -65,6 +65,7 @@ struct PlayerMgr {
 	CPlayer player;
 	bool Win;
 	bool mine = false;
+	bool bGameOver = false;
 };
 
 struct SendPlayerData {

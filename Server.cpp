@@ -3,6 +3,7 @@
 #include <WinSock2.h>
 #include <iostream>
 #include <map>
+#include <algorithm>
 #include "Player.h"
 #include "Foothold.h"
 
@@ -50,11 +51,8 @@ void CreateMainGameScene();
 void CheckCollideFoothold();
 
 bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player);
-bool IsCollidePlayerByPlayer(CPlayer& a, CPlayer& b);
 
-void CheckCollidePlayers();
 void InitServerSendData();
-void UpdateClientKeyInput();
 void CheckGameOver();
 void SetCilentData(DWORD portnum);
 void FootHoldInit();
@@ -66,6 +64,9 @@ void UpdatePlayerLocation(CPlayer& p, InputData& input);
 void UpdateFootholdbyPlayer(CPlayer& player);
 void SettingPlayersMine(DWORD ThreadId);
 void CheckInsertPlayerMgrData(DWORD ThreadId);
+
+bool IsGameOver(CPlayer& player);
+void CheckGameWin(DWORD ThreadId);
 
 // 소켓 함수 오류 출력 후 종료
 void err_quit(const char* msg)
@@ -278,15 +279,6 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player)
 	return true;
 }
 
-bool IsCollidePlayerByPlayer(CPlayer& a, CPlayer& b)
-{
-	return false;
-}
-
-void CheckCollidePlayers()
-{
-}
-
 void UpdatePlayerLocation(CPlayer& p, InputData& input)
 {
 	if (input.bUp) p.dz = -0.1f;
@@ -299,10 +291,6 @@ void UpdatePlayerLocation(CPlayer& p, InputData& input)
 	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
 	if (p.dz && !input.bUp && !input.bDown) p.dz = 0.0f;
 	if (p.dx && !input.bLeft && !input.bRight) p.dx = 0.0f; 
-}
-
-void UpdateClientKeyInput()
-{
 }
 
 void CheckGameOver()
@@ -374,7 +362,10 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 		(*ClientManager[threadId]).player.Update();
 		UpdateFootholdbyPlayer((*ClientManager[threadId]).player);
 		CheckCollideFoothold();
-		
+
+		(*ClientManager[threadId]).bGameOver = IsGameOver((*ClientManager[threadId]).player);
+		CheckGameWin(threadId);
+
 		int nServerDataLen = sizeof(SendGameData);
 		send(client_sock, (char*)&nServerDataLen, sizeof(int), 0);
 		send(client_sock,(char*)&ServerGameData, nServerDataLen, 0);
@@ -394,7 +385,6 @@ void InitServerSendData()
 	ServerGameData->PMgrs = Players;
 	ServerGameData->Bottom = Bottom;
 	//ServerGameData.ServerTime;
-	//ServerGameData.Win;
 }
 
 // 클라이언트에서 자신의 정보와 타인의 정보 구분을 위한 멤버변수 세팅을 위한 함수
@@ -419,4 +409,23 @@ void CheckInsertPlayerMgrData(DWORD ThreadId)
 			}
 		}
 	}
+}
+
+// 시간이 초과되거나 플레이어가 추락했을 경우를 검사
+bool IsGameOver(CPlayer& player)
+{
+	if (player.y < UNDER) return true;
+	// 시간 끝났을때 조건도 추가필요
+	return false;
+}
+
+bool compare(PlayerMgr& p1, PlayerMgr& p2)
+{
+	return p1.player.m_nScore > p2.player.m_nScore;
+}
+
+void CheckGameWin(DWORD ThreadId)
+{
+	sort(ServerGameData->PMgrs, ServerGameData->PMgrs + CLIENT_NUM);
+	(*ClientManager[ThreadId]).Win = (ThreadId == ServerGameData->PMgrs[0].threadId) ? true : false;
 }

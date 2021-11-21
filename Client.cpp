@@ -200,6 +200,7 @@ SendGameData* ServerDatas;
 void TimerFunc();
 void UpdateSendData();
 bool IsPlayingGame();
+bool IsGameOverState();
 int myIndex = -1;
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -823,6 +824,8 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 		for (int i = 0; i < CLIENT_NUM; ++i)
 			if (ServerDatas->PMgr[i].mine) myIndex = i;
+
+		if (IsGameOverState()) CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
 		//ServerDatas = reinterpret_cast<SendGameData*>(&buf); -> 기존내용 안돌아가면 이걸로 테스트
 	}
 
@@ -849,4 +852,11 @@ void UpdateSendData()
 bool IsPlayingGame()
 {
 	return false;
+}
+
+bool IsGameOverState()
+{
+	for (int i = 0; i < CLIENT_NUM; ++i)
+		if (!ServerDatas->PMgr[i].bGameOver) return false;
+	return true;
 }
