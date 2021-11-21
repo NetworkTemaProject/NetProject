@@ -39,7 +39,6 @@ SendGameData* ServerGameData;
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
-SOCKET client_sock;
 
 void ServerInit();
 BOOL IsOkGameStart(int PlayerCount);
@@ -151,13 +150,15 @@ int main(int argc, char* argv[])
 	int addrlen;
 
 	HANDLE hClientThread = {};
+	
+	SOCKET client_socks[2] = {};
 
-	while (1)
+	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
 		//accept()
 		addrlen = sizeof(clientaddr);
-		client_sock = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
-		if (client_sock == INVALID_SOCKET)
+		client_socks[i] = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
+		if (client_socks[i] == INVALID_SOCKET)
 		{
 			err_display("accept()");
 			break;
@@ -165,19 +166,52 @@ int main(int argc, char* argv[])
 
 		// 신호 상태
 		hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
-		if (hFootholdEvent == NULL) return 1;
-
-		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_sock, 0, NULL);
-
-		if (IsOkGameStart(++custom_counter))
-		{
-			ServerInit();
-		}
-		
-
-		// closesocket()
-		closesocket(client_sock);
+		if (hFootholdEvent == NULL) 
+			return 1;
 	}
+
+	custom_counter = CLIENT_NUM;
+	for (int i = 0; i < CLIENT_NUM; ++i)
+	{
+		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
+		if (hClientThread != NULL)
+			CloseHandle(hClientThread);
+		else
+			closesocket(client_socks[i]);
+	}
+
+	if (IsOkGameStart(custom_counter))
+	{
+		ServerInit();
+	}
+
+	//while (1)
+	//{
+	//	//accept()
+	//	addrlen = sizeof(clientaddr);
+	//	SOCKET client_sock = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
+	//	if (client_sock == INVALID_SOCKET)
+	//	{
+	//		err_display("accept()");
+	//		break;
+	//	}
+
+	//	// 신호 상태
+	//	hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+	//	if (hFootholdEvent == NULL) return 1;
+
+	//	++custom_counter;
+	//	hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_sock, 0, NULL);
+	//	if (hClientThread != NULL)
+	//		CloseHandle(hClientThread);
+	//	else
+	//		closesocket(client_sock);
+
+	//	if (IsOkGameStart(custom_counter))
+	//	{
+	//		ServerInit();
+	//	}
+	//}
 
 	// closesocket()
 	closesocket(listen_sock);
@@ -345,17 +379,11 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	addrlen = sizeof(clientAddr);
 	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
 
-	while (1)
-	{
-		if (custom_counter == 2)
-		{
-			cout << custom_counter << endl;
-			cout << inet_ntoa(clientAddr.sin_addr) << endl;
-			send(clientSock, (char*)custom_counter, sizeof(int), 0);
-			break;
-		}
-	}
-	SendPlayerData ClientData;
+	send(clientSock, (char*)&custom_counter, sizeof(int), 0);
+	cout << custom_counter << endl;
+	cout << inet_ntoa(clientAddr.sin_addr) << endl;
+	
+	/*SendPlayerData ClientData;
 	int nClientDataLen;
 	while (1)
 	{
@@ -365,8 +393,8 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		DWORD threadId = GetCurrentThreadId();
 		CheckInsertPlayerMgrData(threadId);
 
-		recvn(client_sock, (char*)&nClientDataLen, sizeof(int), 0);
-		recvn(client_sock, (char*)&ClientData, nClientDataLen, 0);
+		recvn(clientSock, (char*)&nClientDataLen, sizeof(int), 0);
+		recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
 
 		SettingPlayersMine(threadId);
 		UpdatePlayerLocation(ClientManager[threadId].player, ClientData.Input);
@@ -375,11 +403,12 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		CheckCollideFoothold();
 
 		int nServerDataLen = sizeof(SendGameData);
-		send(client_sock, (char*)&nServerDataLen, sizeof(int), 0);
-		send(client_sock, (char*)&ServerGameData, nServerDataLen, 0);
+		send(clientSock, (char*)&nServerDataLen, sizeof(int), 0);
+		send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
 
 		SetEvent(hFootholdEvent);
-	}
+	}*/
+
 	return 0;
 }
 
@@ -390,8 +419,8 @@ bool IsReadytoPlay(bool isReady)
 
 void InitServerSendData()
 {
-	ServerGameData->PMgrs = Players;
-	ServerGameData->Bottom = Bottom;
+	//ServerGameData->PMgrs = Players;
+	//ServerGameData->Bottom = Bottom;
 	//ServerGameData.ServerTime;
 	//ServerGameData.Win;
 }
@@ -401,13 +430,13 @@ void SettingPlayersMine(DWORD ThreadId)
 {
 	for (int i = 0; i < CLIENT_NUM; ++i)
 		ServerGameData->PMgrs[i].mine = false;
-	ClientManager[ThreadId].mine = true;
+	// ClientManager[ThreadId].mine = true;
 }
 
 // threadId를 통해서 플레이어 구분해서 map으로 관리
 void CheckInsertPlayerMgrData(DWORD ThreadId)
 {
-	auto manager = ClientManager.find(ThreadId);
+	/*auto manager = ClientManager.find(ThreadId);
 	if (manager == ClientManager.end()) {
 
 		for (int i = 0; i < CLIENT_NUM; ++i) {
@@ -417,5 +446,5 @@ void CheckInsertPlayerMgrData(DWORD ThreadId)
 				ClientManager.insert({ ThreadId, ServerGameData->PMgrs[i] });
 			}
 		}
-	}
+	}*/
 }
