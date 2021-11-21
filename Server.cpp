@@ -293,6 +293,7 @@ void UpdatePlayerLocation(CPlayer& p, InputData& input)
 	if (input.bDown) p.dz = 0.1f;
 	if (input.bLeft) p.dx = -0.1f;
 	if (input.bRight) p.dx = 0.1f;
+	if (input.bSpace) p.Jump();
 
 	// 업데이트 중인지 판단 -> dx dz로 판단
 	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
@@ -337,6 +338,23 @@ void PlayerInit()
 
 DWORD __stdcall ProcessClient(LPVOID arg)
 {
+	SOCKET clientSock = (SOCKET)arg;
+	SOCKADDR_IN clientAddr = {};
+	int addrlen = 0;
+
+	addrlen = sizeof(clientAddr);
+	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
+
+	while (1)
+	{
+		if (custom_counter == 2)
+		{
+			cout << custom_counter << endl;
+			cout << inet_ntoa(clientAddr.sin_addr) << endl;
+			send(clientSock, (char*)custom_counter, sizeof(int), 0);
+			break;
+		}
+	}
 	SendPlayerData ClientData;
 	int nClientDataLen;
 	while (1)
@@ -352,6 +370,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 		SettingPlayersMine(threadId);
 		UpdatePlayerLocation(ClientManager[threadId].player, ClientData.Input);
+		ClientManager[threadId].player.Update();
 		UpdateFootholdbyPlayer(ClientManager[threadId].player);
 		CheckCollideFoothold();
 
@@ -361,6 +380,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 		SetEvent(hFootholdEvent);
 	}
+	return 0;
 }
 
 bool IsReadytoPlay(bool isReady)
@@ -370,8 +390,8 @@ bool IsReadytoPlay(bool isReady)
 
 void InitServerSendData()
 {
-	// ServerGameData->PMgrs = Players;
-	// ServerGameData->Bottom = Bottom;
+	ServerGameData->PMgrs = Players;
+	ServerGameData->Bottom = Bottom;
 	//ServerGameData.ServerTime;
 	//ServerGameData.Win;
 }
