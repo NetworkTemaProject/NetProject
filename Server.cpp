@@ -33,7 +33,7 @@ int portnum;
 bool Win;
 
 PlayerMgr Players[CLIENT_NUM];
-map<DWORD, PlayerMgr&> ClientManager;
+map<DWORD, PlayerMgr*> ClientManager;
 
 SendGameData* ServerGameData;
 
@@ -370,9 +370,9 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 		recvn(client_sock, (char*)&ClientData, nClientDataLen, 0);	
 			
 		SettingPlayersMine(threadId);
-		UpdatePlayerLocation(ClientManager[threadId].player, ClientData.Input);
-		ClientManager[threadId].player.Update();
-		UpdateFootholdbyPlayer(ClientManager[threadId].player);
+		UpdatePlayerLocation((*ClientManager[threadId]).player, ClientData.Input);
+		(*ClientManager[threadId]).player.Update();
+		UpdateFootholdbyPlayer((*ClientManager[threadId]).player);
 		CheckCollideFoothold();
 		
 		int nServerDataLen = sizeof(SendGameData);
@@ -402,7 +402,7 @@ void SettingPlayersMine(DWORD ThreadId)
 {
 	for (int i = 0; i < CLIENT_NUM; ++i)
 		ServerGameData->PMgrs[i].mine = false;
-	ClientManager[ThreadId].mine = true;
+	(*ClientManager[ThreadId]).mine = true;
 }
 
 // threadId를 통해서 플레이어 구분해서 map으로 관리
@@ -415,7 +415,7 @@ void CheckInsertPlayerMgrData(DWORD ThreadId)
 			if (!ServerGameData->PMgrs[i].threadId)
 			{
 				ServerGameData->PMgrs[i].threadId = ThreadId;
-				ClientManager.insert({ ThreadId, ServerGameData->PMgrs[i] });
+				ClientManager.insert({ ThreadId, &ServerGameData->PMgrs[i] });
 			}
 		}
 	}
