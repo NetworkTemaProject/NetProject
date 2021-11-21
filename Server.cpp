@@ -2,6 +2,7 @@
 #pragma comment(lib,"ws2_32")
 #include <WinSock2.h>
 #include <iostream>
+#include <map>
 #include "Player.h"
 #include "Foothold.h"
 
@@ -32,6 +33,8 @@ int portnum;
 bool Win;
 
 PlayerMgr Players[CLIENT_NUM];
+map<DWORD, PlayerMgr&> ClientManager;
+
 SendGameData* ServerGameData;
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
@@ -50,8 +53,6 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player);
 bool IsCollidePlayerByPlayer(CPlayer& a, CPlayer& b);
 
 void CheckCollidePlayers();
-void UpdatePlayerLocation(CPlayer& p, InputData& input);
-void UpdateFootholdbyPlayer(CPlayer& player);
 void InitServerSendData();
 void UpdateClientKeyInput();
 void CheckGameOver();
@@ -60,6 +61,11 @@ void FootHoldInit();
 void PlayerInit();
 bool IsReadytoPlay(bool isReady);
 DWORD WINAPI ProcessClient(LPVOID arg);
+
+void UpdatePlayerLocation(CPlayer& p, InputData& input);
+void UpdateFootholdbyPlayer(CPlayer& player);
+void SettingPlayersMine(DWORD ThreadId);
+void CheckInsertPlayerMgrData(DWORD ThreadId);
 
 // 소켓 함수 오류 출력 후 종료
 void err_quit(const char* msg)
@@ -156,6 +162,10 @@ int main(int argc, char* argv[])
 			err_display("accept()");
 			break;
 		}
+
+		// 신호 상태
+		hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+		if (hFootholdEvent == NULL) return 1;
 
 		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_sock, 0, NULL);
 
@@ -325,44 +335,32 @@ void PlayerInit()
 	}
 }
 
-DWORD WINAPI ProcessClient(LPVOID arg)
+DWORD __stdcall ProcessClient(LPVOID arg)
 {
-	SOCKET clientSock = (SOCKET)arg;
-	SOCKADDR_IN clientAddr = {};
-	int addrlen = 0;
-
-	addrlen = sizeof(clientAddr);
-	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
-
+	SendPlayerData ClientData;
+	int nClientDataLen;
 	while (1)
 	{
-		if (custom_counter == 2)
-		{
-			cout << custom_counter << endl;
-			cout << inet_ntoa(clientAddr.sin_addr) << endl;
-			send(clientSock, (char*)custom_counter, sizeof(int), 0);
-			break;
-		}
+		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
+		if (retval != WAIT_OBJECT_0) break;
+
+		DWORD threadId = GetCurrentThreadId();
+		CheckInsertPlayerMgrData(threadId);
+
+		recvn(client_sock, (char*)&nClientDataLen, sizeof(int), 0);
+		recvn(client_sock, (char*)&ClientData, nClientDataLen, 0);
+
+		SettingPlayersMine(threadId);
+		UpdatePlayerLocation(ClientManager[threadId].player, ClientData.Input);
+		UpdateFootholdbyPlayer(ClientManager[threadId].player);
+		CheckCollideFoothold();
+
+		int nServerDataLen = sizeof(SendGameData);
+		send(client_sock, (char*)&nServerDataLen, sizeof(int), 0);
+		send(client_sock, (char*)&ServerGameData, nServerDataLen, 0);
+
+		SetEvent(hFootholdEvent);
 	}
-
-	// 플레이어 구분 후 좌표업데이트
-	
-	//CPlayer* tPlayer;
-	//for (int i = 0; i < CLIENT_NUM; ++i)
-	//	if (Players[i].threadId == GetCurretnThreadId()) tPlayer == &player[i].player;
-	// 포트넘버 or sock으로 수정필요, threadId론 클라 상에서 구분불가능
-
-	//while (1)
-	//{
-	//	//UpdatePlayerLocation(*tPlayer,PlayerMgr.input);
-	//	//UpdateFootholdbyPlayer(*tPlayer);
-	//	CheckCollideFoothold();
-	//	int nServerDataLen = sizeof(SendGameData);
-	//	send(clientSock, (char*)&nServerDataLen, sizeof(int), 0);
-	//	send(clientSock,(char*)&ServerGameData, nServerDataLen, 0);
-	//}
-
-	return 0;
 }
 
 bool IsReadytoPlay(bool isReady)
@@ -376,4 +374,28 @@ void InitServerSendData()
 	// ServerGameData->Bottom = Bottom;
 	//ServerGameData.ServerTime;
 	//ServerGameData.Win;
+}
+
+// 클라이언트에서 자신의 정보와 타인의 정보 구분을 위한 멤버변수 세팅을 위한 함수
+void SettingPlayersMine(DWORD ThreadId)
+{
+	for (int i = 0; i < CLIENT_NUM; ++i)
+		ServerGameData->PMgrs[i].mine = false;
+	ClientManager[ThreadId].mine = true;
+}
+
+// threadId를 통해서 플레이어 구분해서 map으로 관리
+void CheckInsertPlayerMgrData(DWORD ThreadId)
+{
+	auto manager = ClientManager.find(ThreadId);
+	if (manager == ClientManager.end()) {
+
+		for (int i = 0; i < CLIENT_NUM; ++i) {
+			if (!ServerGameData->PMgrs[i].threadId)
+			{
+				ServerGameData->PMgrs[i].threadId = ThreadId;
+				ClientManager.insert({ ThreadId, ServerGameData->PMgrs[i] });
+			}
+		}
+	}
 }

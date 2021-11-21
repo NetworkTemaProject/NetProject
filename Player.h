@@ -62,9 +62,10 @@ struct InputData {
 };
 
 struct PlayerMgr {
-	DWORD portnum = NULL;
+	DWORD threadId;
 	CPlayer player;
 	bool Win;
+	bool mine = false;
 };
 
 struct SendPlayerData {

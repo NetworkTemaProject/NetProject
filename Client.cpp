@@ -200,7 +200,7 @@ SendGameData* ServerDatas;
 void TimerFunc();
 void UpdateSendData();
 bool IsPlayingGame();
-
+int myIndex = -1;
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -422,12 +422,17 @@ GLvoid drawScene()
 	//// 자신의 플레이어 인덱스 구분을 통해서 출력 위치 변경필요
 	//vtrans = glm::lookAt(glm::vec3(player.x, player.y + 2, player.z + 2), glm::vec3(player.x, player.y, player.z), glm::vec3(0.0f, 1.0f, 0.0f));
 
-	//unsigned int view = glGetUniformLocation(s_program, "view");
-	//glUniformMatrix4fv(view, 1, GL_FALSE, &vtrans[0][0]);
+	camX = (float)sin(theta / 180 * 3.141592) * radius;
+	camY = +0.0;
+	camZ = -1 * (float)cos(theta / 180 * 3.141592) * radius;
+	// 자신의 플레이어 인덱스 구분을 통해서 출력 위치 변경필요
 
-	//unsigned int projection = glGetUniformLocation(s_program, "projection");
-	//ptrans = glm::perspective(glm::radians(45.0f), (float)g_window_w / (float)g_window_h, 0.1f, 100.0f);
-	//ptrans = glm::translate(ptrans, glm::vec3(0, 0, -5.0));
+	if (myIndex != -1)
+		vtrans = glm::lookAt(glm::vec3((ServerDatas->PMgr[myIndex]).player.x, (ServerDatas->PMgr[myIndex]).player.y + 2, (ServerDatas->PMgr[myIndex]).player.z + 2),
+			glm::vec3((ServerDatas->PMgr[myIndex]).player.x, (ServerDatas->PMgr[myIndex]).player.y, (ServerDatas->PMgr[myIndex]).player.z), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	unsigned int view = glGetUniformLocation(s_program, "view");
+	glUniformMatrix4fv(view, 1, GL_FALSE, &vtrans[0][0]);
 
 	//glUniformMatrix4fv(projection, 1, GL_FALSE, &ptrans[0][0]);
 
@@ -481,7 +486,13 @@ GLvoid drawScene()
 	//Print_word(0.5f, 0.7f, 0.8f, 0.7f,tine, word2);
 	//check_Bonus();
 
-	Print_GameState();
+	tine = present - start;
+
+	if (myIndex != -1)
+		Print_word(0.5f, 0.8f, 0.7f, 0.8f, (ServerDatas->PMgr[myIndex]).player.m_nScore, word1);
+	// 시간 처리 후 ServerData의 시간으로 변경필요 (check_bonus 함수도)
+	Print_word(0.5f, 0.7f, 0.8f, 0.7f, tine, word2);
+	check_Bonus();
 
 	glutSwapBuffers();
 }
@@ -817,27 +828,23 @@ DWORD WINAPI ClientMain(LPVOID arg)
 			err_quit("connect()");
 	}
 
-	int CurrentPlayerNum = 0;
-	recvn(sock, (char*)&CurrentPlayerNum, sizeof(int), 0);
-	if (CurrentPlayerNum == 2)
-	{
-		CurrentGameState = static_cast<int>(EGameState::PLAYING);
-	}
-
 	int len;
 	char buf[BUFSIZE];
 
+	int nClientDataLen = sizeof(SendPlayerData);
 	while (1)
 	{
 		// myPlayer 송신
-
+		send(sock, (char*)&nClientDataLen, sizeof(int), 0);
+		send(sock, (char*)&myPlayer, nClientDataLen, 0);
 		// ServerGameData 수신
 		recvn(sock, (char*)&len, sizeof(int), 0);
-		recvn(sock, buf, len, 0);
-		ServerDatas = reinterpret_cast<SendGameData*>(&buf);
-		// 여기서 포트번호로? 어느 인덱스가 자신의 것인지 판단 후 기억해놓기
-	}
+		recvn(sock, (char*)&ServerDatas, len, 0);
 
+		for (int i = 0; i < CLIENT_NUM; ++i)
+			if (ServerDatas->PMgr[i].mine) myIndex = i;
+		//ServerDatas = reinterpret_cast<SendGameData*>(&buf); -> 기존내용 안돌아가면 이걸로 테스트
+	}
 
 	// closesocket()
 	closesocket(sock);
