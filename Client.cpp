@@ -810,26 +810,18 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
 
-	while (1)
+	if (CurrentGameState == static_cast<int>(EGameState::WAITING))
 	{
-		if (CurrentGameState == static_cast<int>(EGameState::WAITING))
-		{
-			retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
-			if (retval == SOCKET_ERROR)
-				err_quit("connect()");
-			break;
-		}
+		retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
+		if (retval == SOCKET_ERROR)
+			err_quit("connect()");
 	}
 
 	int CurrentPlayerNum = 0;
-	while (1)
+	recvn(sock, (char*)&CurrentPlayerNum, sizeof(int), 0);
+	if (CurrentPlayerNum == 2)
 	{
-		recvn(sock, (char*)&CurrentPlayerNum, sizeof(int), 0);
-		if (CurrentPlayerNum == 2)
-		{
-			CurrentGameState = static_cast<int>(EGameState::PLAYING);
-			break;
-		}
+		CurrentGameState = static_cast<int>(EGameState::PLAYING);
 	}
 
 	int len;
