@@ -33,7 +33,7 @@ int portnum;
 bool Win;
 
 PlayerMgr Players[CLIENT_NUM];
-map<DWORD, PlayerMgr&> ClientManager;
+map<DWORD, PlayerMgr*> ClientManager;
 
 SendGameData* ServerGameData;
 
@@ -49,11 +49,8 @@ void CreateMainGameScene();
 void CheckCollideFoothold();
 
 bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player);
-bool IsCollidePlayerByPlayer(CPlayer& a, CPlayer& b);
 
-void CheckCollidePlayers();
 void InitServerSendData();
-void UpdateClientKeyInput();
 void CheckGameOver();
 void SetCilentData(DWORD portnum);
 void FootHoldInit();
@@ -65,6 +62,9 @@ void UpdatePlayerLocation(CPlayer& p, InputData& input);
 void UpdateFootholdbyPlayer(CPlayer& player);
 void SettingPlayersMine(DWORD ThreadId);
 void CheckInsertPlayerMgrData(DWORD ThreadId);
+
+bool IsGameOver(CPlayer& player);
+void CheckGameWin(DWORD ThreadId);
 
 // 소켓 함수 오류 출력 후 종료
 void err_quit(const char* msg)
@@ -185,34 +185,6 @@ int main(int argc, char* argv[])
 		ServerInit();
 	}
 
-	//while (1)
-	//{
-	//	//accept()
-	//	addrlen = sizeof(clientaddr);
-	//	SOCKET client_sock = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
-	//	if (client_sock == INVALID_SOCKET)
-	//	{
-	//		err_display("accept()");
-	//		break;
-	//	}
-
-	//	// 신호 상태
-	//	hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
-	//	if (hFootholdEvent == NULL) return 1;
-
-	//	++custom_counter;
-	//	hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_sock, 0, NULL);
-	//	if (hClientThread != NULL)
-	//		CloseHandle(hClientThread);
-	//	else
-	//		closesocket(client_sock);
-
-	//	if (IsOkGameStart(custom_counter))
-	//	{
-	//		ServerInit();
-	//	}
-	//}
-
 	// closesocket()
 	closesocket(listen_sock);
 
@@ -312,15 +284,6 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player)
 	return true;
 }
 
-bool IsCollidePlayerByPlayer(CPlayer& a, CPlayer& b)
-{
-	return false;
-}
-
-void CheckCollidePlayers()
-{
-}
-
 void UpdatePlayerLocation(CPlayer& p, InputData& input)
 {
 	if (input.bUp) p.dz = -0.1f;
@@ -333,10 +296,6 @@ void UpdatePlayerLocation(CPlayer& p, InputData& input)
 	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
 	if (p.dz && !input.bUp && !input.bDown) p.dz = 0.0f;
 	if (p.dx && !input.bLeft && !input.bRight) p.dx = 0.0f; 
-}
-
-void UpdateClientKeyInput()
-{
 }
 
 void CheckGameOver()
@@ -383,7 +342,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	cout << custom_counter << endl;
 	cout << inet_ntoa(clientAddr.sin_addr) << endl;
 	
-	/*SendPlayerData ClientData;
+	SendPlayerData ClientData;
 	int nClientDataLen;
 	while (1)
 	{
@@ -397,18 +356,20 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
 
 		SettingPlayersMine(threadId);
-		UpdatePlayerLocation(ClientManager[threadId].player, ClientData.Input);
-		ClientManager[threadId].player.Update();
-		UpdateFootholdbyPlayer(ClientManager[threadId].player);
+		UpdatePlayerLocation((*ClientManager[threadId]).player, ClientData.Input);
+		(*ClientManager[threadId]).player.Update();
+		UpdateFootholdbyPlayer((*ClientManager[threadId]).player);
 		CheckCollideFoothold();
+
+		(*ClientManager[threadId]).bGameOver = IsGameOver((*ClientManager[threadId]).player);
+		CheckGameWin(threadId);
 
 		int nServerDataLen = sizeof(SendGameData);
 		send(clientSock, (char*)&nServerDataLen, sizeof(int), 0);
 		send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
 
 		SetEvent(hFootholdEvent);
-	}*/
-
+	}
 	return 0;
 }
 
@@ -419,10 +380,9 @@ bool IsReadytoPlay(bool isReady)
 
 void InitServerSendData()
 {
-	//ServerGameData->PMgrs = Players;
-	//ServerGameData->Bottom = Bottom;
+	ServerGameData->PMgrs = Players;
+	ServerGameData->Bottom = Bottom;
 	//ServerGameData.ServerTime;
-	//ServerGameData.Win;
 }
 
 // 클라이언트에서 자신의 정보와 타인의 정보 구분을 위한 멤버변수 세팅을 위한 함수
@@ -430,21 +390,42 @@ void SettingPlayersMine(DWORD ThreadId)
 {
 	for (int i = 0; i < CLIENT_NUM; ++i)
 		ServerGameData->PMgrs[i].mine = false;
-	// ClientManager[ThreadId].mine = true;
+	(*ClientManager[ThreadId]).mine = true;
 }
 
 // threadId를 통해서 플레이어 구분해서 map으로 관리
 void CheckInsertPlayerMgrData(DWORD ThreadId)
 {
-	/*auto manager = ClientManager.find(ThreadId);
-	if (manager == ClientManager.end()) {
+	auto manager = ClientManager.find(ThreadId);
+	if (manager == ClientManager.end())
+	{
 
-		for (int i = 0; i < CLIENT_NUM; ++i) {
+		for (int i = 0; i < CLIENT_NUM; ++i)
+		{
 			if (!ServerGameData->PMgrs[i].threadId)
 			{
 				ServerGameData->PMgrs[i].threadId = ThreadId;
-				ClientManager.insert({ ThreadId, ServerGameData->PMgrs[i] });
+				ClientManager.insert({ ThreadId, &ServerGameData->PMgrs[i] });
 			}
 		}
-	}*/
+	}
+}
+
+// 시간이 초과되거나 플레이어가 추락했을 경우를 검사
+bool IsGameOver(CPlayer& player)
+{
+	if (player.y < UNDER) return true;
+	// 시간 끝났을때 조건도 추가필요
+	return false;
+}
+
+bool compare(PlayerMgr& p1, PlayerMgr& p2)
+{
+	return p1.player.m_nScore > p2.player.m_nScore;
+}
+
+void CheckGameWin(DWORD ThreadId)
+{
+	sort(ServerGameData->PMgrs, ServerGameData->PMgrs + CLIENT_NUM);
+	(*ClientManager[ThreadId]).Win = (ThreadId == ServerGameData->PMgrs[0].threadId) ? true : false;
 }
