@@ -202,7 +202,11 @@ void TimerFunc();
 void UpdateSendData();
 bool IsPlayingGame();
 bool IsGameOverState();
+bool IsChangeCamera();
 int myIndex = -1;
+int otherIndex = -1;
+int showIndex = -1;
+bool bChangeCam = false;
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -404,10 +408,15 @@ GLvoid drawScene()
 	camZ = -1 * (float)cos(theta / 180 * 3.141592) * radius;
 	// 자신의 플레이어 인덱스 구분을 통해서 출력 위치 변경필요
 
-	if(myIndex != -1)
-		vtrans = glm::lookAt(glm::vec3((ServerDatas.PMgr[myIndex]).player.x, (ServerDatas.PMgr[myIndex]).player.y + 2, (ServerDatas.PMgr[myIndex]).player.z + 2),
-		glm::vec3((ServerDatas.PMgr[myIndex]).player.x, (ServerDatas.PMgr[myIndex]).player.y, (ServerDatas.PMgr[myIndex]).player.z), glm::vec3(0.0f, 1.0f, 0.0f));
+	if (myIndex != -1)
+	{
+		showIndex = (bChangeCam) ? otherIndex : myIndex;
+		// 다른 플레이어 없을 때 오류나는거 방지
+		if (showIndex == -1) showIndex = myIndex;
 
+		vtrans = glm::lookAt(glm::vec3((ServerDatas.PMgr[showIndex]).player.x, (ServerDatas.PMgr[showIndex]).player.y + 2, (ServerDatas.PMgr[showIndex]).player.z + 2),
+			glm::vec3((ServerDatas.PMgr[showIndex]).player.x, (ServerDatas.PMgr[showIndex]).player.y, (ServerDatas.PMgr[showIndex]).player.z), glm::vec3(0.0f, 1.0f, 0.0f));
+	}
 	unsigned int view = glGetUniformLocation(s_program, "view");
 	glUniformMatrix4fv(view, 1, GL_FALSE, &vtrans[0][0]);
 
@@ -607,6 +616,12 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 			}
 			break;
 		}
+		case 'v':
+		case 'V':
+			if (IsChangeCamera()| bChangeCam)
+				bChangeCam != bChangeCam;
+
+			break; 
 	}
 
 	glutPostRedisplay();
@@ -804,8 +819,10 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		recvn(sock, (char*)&ServerDatas, len, 0);
 
 		for (int i = 0; i < CLIENT_NUM; ++i)
+		{
 			if (ServerDatas.PMgr[i].mine) myIndex = i;
-
+			else otherIndex = i;
+		}
 		if (IsGameOverState()) CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
 		//ServerDatas = reinterpret_cast<SendGameData*>(&buf); -> 기존내용 안돌아가면 이걸로 테스트
 	}
@@ -839,5 +856,14 @@ bool IsGameOverState()
 {
 	for (int i = 0; i < CLIENT_NUM; ++i)
 		if (!ServerDatas.PMgr[i].bGameOver) return false;
+	return true;
+}
+
+bool IsChangeCamera()
+{
+	if (CurrentGameState != static_cast<int>(EGameState::PLAYING)) return false;
+	if (!ServerDatas.PMgr[myIndex].bGameOver) return false;
+	if (ServerDatas.PMgr[otherIndex].bGameOver) return false;
+
 	return true;
 }
