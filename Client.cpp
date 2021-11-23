@@ -56,7 +56,8 @@ int p_time = 0;
 char char_score[256];
 char word1[10] = "score:";
 char word2[11] = "life time:";
-char over[10] = "Game Over";
+char over[9] = "You Lose";
+char win[8] = "You Win";
 char TitleString[16] = "Press Enter Key";
 char WaitString[13] = "Waiting. . .";
 
@@ -454,7 +455,6 @@ GLvoid drawScene()
 		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas.PMgr[i]).player.leg_r.TRS)));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
-	check_GameOver();
 
 	if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
 		Time_score();
@@ -470,19 +470,6 @@ GLvoid drawScene()
 	Print_GameState();
 
 	glutSwapBuffers();
-}
-
-void check_GameOver()
-{
-	if (CurrentGameState == static_cast<int>(EGameState::GAMEOVER))
-		renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, over);
-	else
-	{
-		if (player.y < UNDER)
-		{
-			CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
-		}
-	}
 }
 
 void Print_GameState()
@@ -501,7 +488,8 @@ void Print_GameState()
 		}
 		case static_cast<int>(EGameState::GAMEOVER):
 		{
-			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, over);
+			if((ServerDatas.PMgr[myIndex]).Win) renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, over);
+			else renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, over);
 			break;
 		}
 		case static_cast<int>(EGameState::PLAYING):
