@@ -170,18 +170,18 @@ int main(int argc, char* argv[])
 	}
 
 	custom_counter = CLIENT_NUM;
-	for (int i = 0; i < CLIENT_NUM; ++i)
-	{
-		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
-		if (hClientThread != NULL)
-			CloseHandle(hClientThread);
-		else
-			closesocket(client_socks[i]);
-	}
-
 	if (IsOkGameStart(custom_counter))
 	{
 		ServerInit();
+
+		for (int i = 0; i < CLIENT_NUM; ++i)
+		{
+			hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
+			if (hClientThread != NULL)
+				CloseHandle(hClientThread);
+			else
+				closesocket(client_socks[i]);
+		}
 	}
 
 	// closesocket()
@@ -312,6 +312,7 @@ void PlayerInit()
 {
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
+		ServerGameData.PMgrs[i].player = CPlayer();
 		ServerGameData.PMgrs[i].player.x = 0;	// 좌표 값 어떻게 설정할 것인지(랜덤 or 지정) 나중에 상의!
 		ServerGameData.PMgrs[i].player.y = 5;
 		ServerGameData.PMgrs[i].player.z = 0;
@@ -347,6 +348,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		CheckInsertPlayerMgrData(threadId);
 
 		recvn(clientSock, (char*)&nClientDataLen, sizeof(int), 0);
+		recvn(clientSock, (char*)&nClientDataLen, sizeof(int), 0);       
 		recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
 
 		SettingPlayersMine(threadId);

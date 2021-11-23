@@ -802,7 +802,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		CurrentGameState = static_cast<int>(EGameState::PLAYING);
 	}
 
-	int len;
+	int len = 0;
 	char buf[BUFSIZE];
 
 	int nClientDataLen = sizeof(SendPlayerData);
