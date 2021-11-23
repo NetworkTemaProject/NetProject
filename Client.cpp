@@ -182,9 +182,9 @@ CPlayer player;
 ///////////////////////////////////////////////////////////////////////////////////////
 struct SendGameData
 {
-	PlayerMgr* PMgr;
+	PlayerMgr PMgr;
 	clock_t ServerTime;
-	std::vector<Foothold>& Bottom;
+	std::vector<Foothold> Bottom;
 };
 
 SendPlayerData myPlayer;

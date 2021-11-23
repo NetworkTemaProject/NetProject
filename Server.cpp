@@ -10,16 +10,15 @@
 #define SERVERPORT 9000
 
 volatile int custom_counter = 0;
-vector<Foothold> Bottom;
 
 clock_t serverInit_time;
 clock_t serverPre_time;
 clock_t serverDelta_time;
 
 struct SendGameData{
-	PlayerMgr* PMgrs;
+	PlayerMgr PMgrs[CLIENT_NUM];
 	clock_t ServerTime;
-	vector<Foothold>& Bottom;
+	vector<Foothold> Bottom;
 };
 
 bool IsCollisionPandF;
@@ -33,10 +32,9 @@ int portnum;
 
 bool Win;
 
-PlayerMgr Players[CLIENT_NUM];
 map<DWORD, PlayerMgr*> ClientManager;
 
-SendGameData* ServerGameData;
+SendGameData ServerGameData;
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
@@ -48,20 +46,20 @@ void RecTimer();
 void UpdateTimer();
 float timeInterpolation();
 void CreateMainGameScene();
-void CheckCollideFoothold();
+void CheckCollideFoothold(vector<Foothold>& Bottom);
 
 bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player);
 
 void InitServerSendData();
 void CheckGameOver();
-void SetCilentData(DWORD portnum);
+void SetCilentData();
 void FootHoldInit();
 void PlayerInit();
 bool IsReadytoPlay(bool isReady);
 DWORD WINAPI ProcessClient(LPVOID arg);
 
 void UpdatePlayerLocation(CPlayer& p, InputData& input);
-void UpdateFootholdbyPlayer(CPlayer& player);
+void UpdateFootholdbyPlayer(CPlayer& player,vector<Foothold>& Bottom);
 void SettingPlayersMine(DWORD ThreadId);
 void CheckInsertPlayerMgrData(DWORD ThreadId);
 
@@ -220,7 +218,7 @@ void CreateMainGameScene()
 }
 
 
-void UpdateFootholdbyPlayer(CPlayer& player)
+void UpdateFootholdbyPlayer(CPlayer& player, vector<Foothold>& Bottom)
 {
 	player.fall = true;
 	for (size_t i = 0; i < Bottom.size(); ++i) {
@@ -233,7 +231,7 @@ void UpdateFootholdbyPlayer(CPlayer& player)
 	}
 }
 
-void CheckCollideFoothold()
+void CheckCollideFoothold(vector<Foothold>& Bottom)
 {
 	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (Bottom[i].Del)
@@ -297,30 +295,25 @@ void CheckGameOver()
 {
 }
 
-void SetCilentData(DWORD portnum)
-{
-
-}
-
 void FootHoldInit()
 {
-	Bottom.clear();
-	MakeFoothold(Bottom);
-	DeleteRandomFoothold(Bottom);
+	ServerGameData.Bottom.clear();
+	MakeFoothold(ServerGameData.Bottom);
+	DeleteRandomFoothold(ServerGameData.Bottom);
 }
 
 void PlayerInit()
 {
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
-		Players[i].player.x = 0;	// 좌표 값 어떻게 설정할 것인지(랜덤 or 지정) 나중에 상의!
-		Players[i].player.y = 5;
-		Players[i].player.z = 0;
-		Players[i].player.dx = 0;
-		Players[i].player.dy = 0;
-		Players[i].player.dz = 0;
-		Players[i].player.fall = true;
-		Players[i].player.Locate();
+		ServerGameData.PMgrs[i].player.x = 0;	// 좌표 값 어떻게 설정할 것인지(랜덤 or 지정) 나중에 상의!
+		ServerGameData.PMgrs[i].player.y = 5;
+		ServerGameData.PMgrs[i].player.z = 0;
+		ServerGameData.PMgrs[i].player.dx = 0;
+		ServerGameData.PMgrs[i].player.dy = 0;
+		ServerGameData.PMgrs[i].player.dz = 0;
+		ServerGameData.PMgrs[i].player.fall = true;
+		ServerGameData.PMgrs[i].player.Locate();
 	}
 }
 
@@ -360,11 +353,13 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 		SettingPlayersMine(threadId);
 		UpdatePlayerLocation((*ClientManager[threadId]).player, ClientData.Input);
 		(*ClientManager[threadId]).player.Update();
-		UpdateFootholdbyPlayer((*ClientManager[threadId]).player);
-		CheckCollideFoothold();
+		UpdateFootholdbyPlayer((*ClientManager[threadId]).player,ServerGameData.Bottom);
+		CheckCollideFoothold(ServerGameData.Bottom);
 
 		(*ClientManager[threadId]).bGameOver = IsGameOver((*ClientManager[threadId]).player);
 		CheckGameWin(threadId);
+
+		// SetCilentData();
 
 		int nServerDataLen = sizeof(SendGameData);
 		send(client_sock, (char*)&nServerDataLen, sizeof(int), 0);
@@ -382,16 +377,18 @@ bool IsReadytoPlay(bool isReady)
 
 void InitServerSendData()
 {
-	ServerGameData->PMgrs = Players;
-	ServerGameData->Bottom = Bottom;
 	//ServerGameData.ServerTime;
+}
+
+void SetCilentData()
+{
 }
 
 // 클라이언트에서 자신의 정보와 타인의 정보 구분을 위한 멤버변수 세팅을 위한 함수
 void SettingPlayersMine(DWORD ThreadId)
 {
-	for (int i = 0; i < CLIENT_NUM; ++i)
-		ServerGameData->PMgrs[i].mine = false;
+	for (auto iter = ClientManager.begin(); iter != ClientManager.end(); ++iter)
+		iter->second->mine = false;
 	(*ClientManager[ThreadId]).mine = true;
 }
 
@@ -402,10 +399,10 @@ void CheckInsertPlayerMgrData(DWORD ThreadId)
 	if (manager == ClientManager.end()) {
 
 		for (int i = 0; i < CLIENT_NUM; ++i) {
-			if (!ServerGameData->PMgrs[i].threadId)
+			if (!ServerGameData.PMgrs[i].threadId)
 			{
-				ServerGameData->PMgrs[i].threadId = ThreadId;
-				ClientManager.insert({ ThreadId, &ServerGameData->PMgrs[i] });
+				ServerGameData.PMgrs[i].threadId = ThreadId;
+				ClientManager.insert({ ThreadId, &ServerGameData.PMgrs[i] });
 			}
 		}
 	}
@@ -426,6 +423,6 @@ bool compare(PlayerMgr& p1, PlayerMgr& p2)
 
 void CheckGameWin(DWORD ThreadId)
 {
-	sort(ServerGameData->PMgrs, ServerGameData->PMgrs + CLIENT_NUM);
-	(*ClientManager[ThreadId]).Win = (ThreadId == ServerGameData->PMgrs[0].threadId) ? true : false;
+	sort(ServerGameData.PMgrs, ServerGameData.PMgrs + CLIENT_NUM, compare);
+	(*ClientManager[ThreadId]).Win = (ThreadId == ServerGameData.PMgrs[0].threadId) ? true : false;
 }
