@@ -189,7 +189,7 @@ struct SendGameData
 
 SendPlayerData myPlayer;
 PlayerMgr players[CLIENT_NUM];
-SOCKET sock;
+
 SOCKADDR_IN peeraddr;
 SOCKADDR_IN serveraddr;
 SendGameData ServerDatas;
@@ -322,15 +322,12 @@ void Timerfunction(int value)
 		}
 		case static_cast<int>(EGameState::WAITING):
 		{
-			// TODO: 서버와 연결 후 입장 인원이 2명이 될 때까지 대기
 			cout << WaitString << endl;
 			break;
 		}
 		case static_cast<int>(EGameState::PLAYING):
 		{
-
-
-
+			glutTimerFunc(50, Timerfunction, 1);
 			break;
 		}
 		case static_cast<int>(EGameState::GAMEOVER):
@@ -338,7 +335,7 @@ void Timerfunction(int value)
 			break;
 		}
 	}			
-	glutTimerFunc(50, Timerfunction, 1);
+	
 	glutPostRedisplay();
 }
 
@@ -379,7 +376,7 @@ GLvoid drawScene()
 
 	glUseProgram(s_program);
 
-	GLUquadricObj * armL, * armR;
+	GLUquadricObj* armL, * armR;
 	armL = gluNewQuadric();
 	armR = gluNewQuadric();
 
@@ -391,12 +388,12 @@ GLvoid drawScene()
 	Lz = (float)sin(ltheta / 180 * 3.141592) * (-lz);
 
 	unsigned int lightPosLocation = glGetUniformLocation(s_program, "lightPos");
-	glUniform3f(lightPosLocation, Lx,Ly,Lz);
+	glUniform3f(lightPosLocation, Lx, Ly, Lz);
 	unsigned int lightColorLocation = glGetUniformLocation(s_program, "lightColor");
 	glUniform3f(lightColorLocation, cx, cy, cz);
 	unsigned int amlight = glGetUniformLocation(s_program, "ambientLight");
 	glUniform1f(amlight, aml);
-	
+
 
 	unsigned int color_location = glGetUniformLocation(s_program, "objectColor");
 	unsigned int model = glGetUniformLocation(s_program, "model");
@@ -405,7 +402,7 @@ GLvoid drawScene()
 	camY = +0.0;
 	camZ = -1 * (float)cos(theta / 180 * 3.141592) * radius;
 	// 자신의 플레이어 인덱스 구분을 통해서 출력 위치 변경필요
-	
+
 	if(myIndex != -1)
 		vtrans = glm::lookAt(glm::vec3((ServerDatas.PMgr[myIndex]).player.x, (ServerDatas.PMgr[myIndex]).player.y + 2, (ServerDatas.PMgr[myIndex]).player.z + 2),
 		glm::vec3((ServerDatas.PMgr[myIndex]).player.x, (ServerDatas.PMgr[myIndex]).player.y, (ServerDatas.PMgr[myIndex]).player.z), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -428,7 +425,8 @@ GLvoid drawScene()
 		glDrawArrays(GL_TRIANGLES, 0, ServerDatas.Bottom[i].size);
 	}
 
-	for (size_t i = 0; i < CLIENT_NUM; ++i) {
+	for (size_t i = 0; i < CLIENT_NUM; ++i)
+	{
 		// head
 		glUniform3f(color_location, (ServerDatas.PMgr[i]).player.head.r, (ServerDatas.PMgr[i]).player.head.g, (ServerDatas.PMgr[i]).player.head.b);
 		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas.PMgr[i]).player.head.TRS)));
@@ -458,15 +456,16 @@ GLvoid drawScene()
 	}
 	check_GameOver();
 
-	if(CurrentGameState == static_cast<int>(EGameState::PLAYING))
+	if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
 		Time_score();
 
 	tine = present - start;
 
 	if(myIndex != -1)
 		Print_word(0.5f, 0.8f, 0.7f, 0.8f, (ServerDatas.PMgr[myIndex]).player.m_nScore,word1);
+
 	// 시간 처리 후 ServerData의 시간으로 변경필요 (check_bonus 함수도)
-	Print_word(0.5f, 0.7f, 0.8f, 0.7f,tine, word2);
+	Print_word(0.5f, 0.7f, 0.8f, 0.7f, tine, word2);
 	check_Bonus();
 	Print_GameState();
 
@@ -509,6 +508,7 @@ void Print_GameState()
 		{
 			char playing[8] = "Playing";
 			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, playing);
+			break;
 		}
 		default:
 			break;
@@ -788,33 +788,26 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
 
-	while (1)
+	if (CurrentGameState == static_cast<int>(EGameState::WAITING))
 	{
-		if (CurrentGameState == static_cast<int>(EGameState::WAITING))
-		{
-			retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
-			if (retval == SOCKET_ERROR)
-				err_quit("connect()");
-			break;
-		}
+		retval = connect(sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
+		if (retval == SOCKET_ERROR)
+			err_quit("connect()");
 	}
 
 	int CurrentPlayerNum = 0;
-	while (1)
+	recvn(sock, (char*)&CurrentPlayerNum, sizeof(int), 0);
+	if (CurrentPlayerNum == CLIENT_NUM)
 	{
-		recvn(sock, (char*)&CurrentPlayerNum, sizeof(int), 0);
-		if (CurrentPlayerNum == CLIENT_NUM)
-		{
-			CurrentGameState = static_cast<int>(EGameState::PLAYING);
-			break;
-		}
+		CurrentGameState = static_cast<int>(EGameState::PLAYING);
 	}
 
 	int len;
 	char buf[BUFSIZE];
 
 	int nClientDataLen = sizeof(SendPlayerData);
-	while (1) {
+	while (1)
+	{
 		// myPlayer 송신
 		send(sock, (char*)&nClientDataLen, sizeof(int), 0);
 		send(sock, (char*)&myPlayer, nClientDataLen, 0);
