@@ -328,7 +328,7 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 
 	while (1)
 	{
-		if (custom_counter == 2)
+		if (custom_counter == CLIENT_NUM)
 		{
 			cout << custom_counter << endl;
 			cout << inet_ntoa(clientAddr.sin_addr) << endl;

@@ -182,7 +182,7 @@ CPlayer player;
 ///////////////////////////////////////////////////////////////////////////////////////
 struct SendGameData
 {
-	PlayerMgr PMgr;
+	PlayerMgr PMgr[CLIENT_NUM];
 	clock_t ServerTime;
 	std::vector<Foothold> Bottom;
 };
@@ -192,7 +192,7 @@ PlayerMgr players[CLIENT_NUM];
 SOCKET sock;
 SOCKADDR_IN peeraddr;
 SOCKADDR_IN serveraddr;
-SendGameData* ServerDatas;
+SendGameData ServerDatas;
 
 #define SERVERIP "127.0.0.1"
 #define SERVERPORT 9000
@@ -407,8 +407,8 @@ GLvoid drawScene()
 	// 자신의 플레이어 인덱스 구분을 통해서 출력 위치 변경필요
 	
 	if(myIndex != -1)
-		vtrans = glm::lookAt(glm::vec3((ServerDatas->PMgr[myIndex]).player.x, (ServerDatas->PMgr[myIndex]).player.y + 2, (ServerDatas->PMgr[myIndex]).player.z + 2),
-		glm::vec3((ServerDatas->PMgr[myIndex]).player.x, (ServerDatas->PMgr[myIndex]).player.y, (ServerDatas->PMgr[myIndex]).player.z), glm::vec3(0.0f, 1.0f, 0.0f));
+		vtrans = glm::lookAt(glm::vec3((ServerDatas.PMgr[myIndex]).player.x, (ServerDatas.PMgr[myIndex]).player.y + 2, (ServerDatas.PMgr[myIndex]).player.z + 2),
+		glm::vec3((ServerDatas.PMgr[myIndex]).player.x, (ServerDatas.PMgr[myIndex]).player.y, (ServerDatas.PMgr[myIndex]).player.z), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	unsigned int view = glGetUniformLocation(s_program, "view");
 	glUniformMatrix4fv(view, 1, GL_FALSE, &vtrans[0][0]);
@@ -420,40 +420,40 @@ GLvoid drawScene()
 	glUniformMatrix4fv(projection, 1, GL_FALSE, &ptrans[0][0]);
 
 	glBindVertexArray(vao);
-	for (size_t i = 0; i < ServerDatas->Bottom.size(); ++i)
+	for (size_t i = 0; i < ServerDatas.Bottom.size(); ++i)
 	{
-		ServerDatas->Bottom[i].Draw_Start();
-		glUniform3f(color_location, ServerDatas->Bottom[i].r, ServerDatas->Bottom[i].g, ServerDatas->Bottom[i].b);
-		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(ServerDatas->Bottom[i].Drawing)));
-		glDrawArrays(GL_TRIANGLES, 0, ServerDatas->Bottom[i].size);
+		ServerDatas.Bottom[i].Draw_Start();
+		glUniform3f(color_location, ServerDatas.Bottom[i].r, ServerDatas.Bottom[i].g, ServerDatas.Bottom[i].b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(ServerDatas.Bottom[i].Drawing)));
+		glDrawArrays(GL_TRIANGLES, 0, ServerDatas.Bottom[i].size);
 	}
 
 	for (size_t i = 0; i < CLIENT_NUM; ++i) {
 		// head
-		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.head.r, (ServerDatas->PMgr[i]).player.head.g, (ServerDatas->PMgr[i]).player.head.b);
-		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.head.TRS)));
+		glUniform3f(color_location, (ServerDatas.PMgr[i]).player.head.r, (ServerDatas.PMgr[i]).player.head.g, (ServerDatas.PMgr[i]).player.head.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas.PMgr[i]).player.head.TRS)));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		// nose
-		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.nose.r, (ServerDatas->PMgr[i]).player.nose.g, (ServerDatas->PMgr[i]).player.nose.b);
-		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.nose.TRS)));
+		glUniform3f(color_location, (ServerDatas.PMgr[i]).player.nose.r, (ServerDatas.PMgr[i]).player.nose.g, (ServerDatas.PMgr[i]).player.nose.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas.PMgr[i]).player.nose.TRS)));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		// body
-		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.body.r, (ServerDatas->PMgr[i]).player.body.g, (ServerDatas->PMgr[i]).player.body.b);
-		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.body.TRS)));
+		glUniform3f(color_location, (ServerDatas.PMgr[i]).player.body.r, (ServerDatas.PMgr[i]).player.body.g, (ServerDatas.PMgr[i]).player.body.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas.PMgr[i]).player.body.TRS)));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		// arm
-		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.arm_l.r, (ServerDatas->PMgr[i]).player.arm_l.g, (ServerDatas->PMgr[i]).player.arm_l.b);
-		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.arm_l.TRS)));
+		glUniform3f(color_location, (ServerDatas.PMgr[i]).player.arm_l.r, (ServerDatas.PMgr[i]).player.arm_l.g, (ServerDatas.PMgr[i]).player.arm_l.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas.PMgr[i]).player.arm_l.TRS)));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.arm_r.r, (ServerDatas->PMgr[i]).player.arm_r.g, (ServerDatas->PMgr[i]).player.arm_r.b);
-		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.arm_r.TRS)));
+		glUniform3f(color_location, (ServerDatas.PMgr[i]).player.arm_r.r, (ServerDatas.PMgr[i]).player.arm_r.g, (ServerDatas.PMgr[i]).player.arm_r.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas.PMgr[i]).player.arm_r.TRS)));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 		// leg
-		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.leg_l.r, (ServerDatas->PMgr[i]).player.leg_l.g, (ServerDatas->PMgr[i]).player.leg_l.b);
-		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.leg_l.TRS)));
+		glUniform3f(color_location, (ServerDatas.PMgr[i]).player.leg_l.r, (ServerDatas.PMgr[i]).player.leg_l.g, (ServerDatas.PMgr[i]).player.leg_l.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas.PMgr[i]).player.leg_l.TRS)));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glUniform3f(color_location, (ServerDatas->PMgr[i]).player.leg_r.r, (ServerDatas->PMgr[i]).player.leg_r.g, (ServerDatas->PMgr[i]).player.leg_r.b);
-		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas->PMgr[i]).player.leg_r.TRS)));
+		glUniform3f(color_location, (ServerDatas.PMgr[i]).player.leg_r.r, (ServerDatas.PMgr[i]).player.leg_r.g, (ServerDatas.PMgr[i]).player.leg_r.b);
+		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4((ServerDatas.PMgr[i]).player.leg_r.TRS)));
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
 	check_GameOver();
@@ -464,7 +464,7 @@ GLvoid drawScene()
 	tine = present - start;
 
 	if(myIndex != -1)
-		Print_word(0.5f, 0.8f, 0.7f, 0.8f, (ServerDatas->PMgr[myIndex]).player.m_nScore,word1);
+		Print_word(0.5f, 0.8f, 0.7f, 0.8f, (ServerDatas.PMgr[myIndex]).player.m_nScore,word1);
 	// 시간 처리 후 ServerData의 시간으로 변경필요 (check_bonus 함수도)
 	Print_word(0.5f, 0.7f, 0.8f, 0.7f,tine, word2);
 	check_Bonus();
@@ -803,7 +803,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	while (1)
 	{
 		recvn(sock, (char*)&CurrentPlayerNum, sizeof(int), 0);
-		if (CurrentPlayerNum == 2)
+		if (CurrentPlayerNum == CLIENT_NUM)
 		{
 			CurrentGameState = static_cast<int>(EGameState::PLAYING);
 			break;
@@ -823,7 +823,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		recvn(sock, (char*)&ServerDatas, len, 0);
 
 		for (int i = 0; i < CLIENT_NUM; ++i)
-			if (ServerDatas->PMgr[i].mine) myIndex = i;
+			if (ServerDatas.PMgr[i].mine) myIndex = i;
 
 		if (IsGameOverState()) CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
 		//ServerDatas = reinterpret_cast<SendGameData*>(&buf); -> 기존내용 안돌아가면 이걸로 테스트
@@ -857,6 +857,6 @@ bool IsPlayingGame()
 bool IsGameOverState()
 {
 	for (int i = 0; i < CLIENT_NUM; ++i)
-		if (!ServerDatas->PMgr[i].bGameOver) return false;
+		if (!ServerDatas.PMgr[i].bGameOver) return false;
 	return true;
 }
