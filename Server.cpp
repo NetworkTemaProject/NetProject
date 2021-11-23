@@ -50,11 +50,9 @@ void CheckCollideFoothold(vector<Foothold>& Bottom);
 bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player);
 
 void InitServerSendData();
-void CheckGameOver();
 void SetCilentData();
 void FootHoldInit();
 void PlayerInit();
-bool IsReadytoPlay(bool isReady);
 DWORD WINAPI ProcessClient(LPVOID arg);
 
 void UpdatePlayerLocation(CPlayer& p, InputData& input);
@@ -223,7 +221,6 @@ void CreateMainGameScene()
 {
 }
 
-
 void UpdateFootholdbyPlayer(CPlayer& player, vector<Foothold>& Bottom)
 {
 	player.fall = true;
@@ -297,10 +294,6 @@ void UpdatePlayerLocation(CPlayer& p, InputData& input)
 	if (p.dx && !input.bLeft && !input.bRight) p.dx = 0.0f; 
 }
 
-void CheckGameOver()
-{
-}
-
 void FootHoldInit()
 {
 	ServerGameData.Bottom.clear();
@@ -338,16 +331,15 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	cout << inet_ntoa(clientAddr.sin_addr) << endl;
 
 	SendPlayerData ClientData;
-	int nClientDataLen;
+	int nClientDataLen = 0;
 	while (1)
 	{
 		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
-		if (retval != WAIT_OBJECT_0) break;
+		//if (retval != WAIT_OBJECT_0) break;
 
 		DWORD threadId = GetCurrentThreadId();
 		CheckInsertPlayerMgrData(threadId);
 
-		recvn(clientSock, (char*)&nClientDataLen, sizeof(int), 0);
 		recvn(clientSock, (char*)&nClientDataLen, sizeof(int), 0);       
 		recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
 
@@ -369,11 +361,6 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		SetEvent(hFootholdEvent);
 	}
 	return 0;
-}
-
-bool IsReadytoPlay(bool isReady)
-{
-	return true;
 }
 
 void InitServerSendData()
