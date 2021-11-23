@@ -15,7 +15,8 @@ clock_t serverInit_time;
 clock_t serverPre_time;
 clock_t serverDelta_time;
 
-struct SendGameData{
+struct SendGameData
+{
 	PlayerMgr* PMgrs;
 	clock_t ServerTime;
 	vector<Foothold>& Bottom;
@@ -57,6 +58,7 @@ void FootHoldInit();
 void PlayerInit();
 bool IsReadytoPlay(bool isReady);
 DWORD WINAPI ProcessClient(LPVOID arg);
+DWORD WINAPI ProcessTime(LPVOID arg);
 
 void UpdatePlayerLocation(CPlayer& p, InputData& input);
 void UpdateFootholdbyPlayer(CPlayer& player);
@@ -118,6 +120,8 @@ int recvn(SOCKET s, char* buf, int len, int flags)
 using namespace std;
 int main(int argc, char* argv[])
 {
+	ServerInit();
+
 	int retval;
 
 	// 윈속 초기화
@@ -127,7 +131,7 @@ int main(int argc, char* argv[])
 
 	// socket()
 	SOCKET listen_sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (listen_sock == INVALID_SOCKET) 
+	if (listen_sock == INVALID_SOCKET)
 		err_quit("socket()");
 
 	// bind()
@@ -137,21 +141,22 @@ int main(int argc, char* argv[])
 	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serveraddr.sin_port = htons(SERVERPORT);
 	retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
-	if (retval == SOCKET_ERROR) 
+	if (retval == SOCKET_ERROR)
 		err_quit("bind()");
 
 	// listen()
 	retval = listen(listen_sock, SOMAXCONN);
-	if (retval == SOCKET_ERROR) 
+	if (retval == SOCKET_ERROR)
 		err_quit("listen()");
 
 	// 데이터 통신에 사용할 변수
 	SOCKADDR_IN clientaddr;
 	int addrlen;
 
-	HANDLE hClientThread = {};
-	
-	SOCKET client_socks[2] = {};
+	HANDLE hClientThread[2] = {};
+	HANDLE hTimeThread = {};
+
+	SOCKET client_socks[CLIENT_NUM] = {};
 
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
@@ -166,24 +171,25 @@ int main(int argc, char* argv[])
 
 		// 신호 상태
 		hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
-		if (hFootholdEvent == NULL) 
+		if (hFootholdEvent == NULL)
 			return 1;
 	}
 
 	custom_counter = CLIENT_NUM;
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
-		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
-		if (hClientThread != NULL)
+		hClientThread[i] = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
+		/*if (hClientThread != NULL)
 			CloseHandle(hClientThread);
 		else
-			closesocket(client_socks[i]);
+			closesocket(client_socks[i]);*/
 	}
 
-	if (IsOkGameStart(custom_counter))
-	{
-		ServerInit();
-	}
+	hTimeThread = CreateThread(NULL, 0, ProcessTime, (LPVOID)client_socks, 0, NULL);
+
+	WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
+	if (hTimeThread != NULL)
+		WaitForSingleObject(hTimeThread, INFINITE);
 
 	// closesocket()
 	closesocket(listen_sock);
@@ -197,7 +203,7 @@ void ServerInit()
 {
 	FootHoldInit();
 	PlayerInit();
-	InitServerSendData();
+	// InitServerSendData();
 }
 
 BOOL IsOkGameStart(int PlayerCount)
@@ -228,8 +234,10 @@ void CreateMainGameScene()
 void UpdateFootholdbyPlayer(CPlayer& player)
 {
 	player.fall = true;
-	for (size_t i = 0; i < Bottom.size(); ++i) {
-		if (IsCollideFootholdByPlayer(Bottom[i], player)) {
+	for (size_t i = 0; i < Bottom.size(); ++i)
+	{
+		if (IsCollideFootholdByPlayer(Bottom[i], player))
+		{
 			player.fall = false;
 			player.dy = 0;
 			Bottom[i].startDel = true;
@@ -240,17 +248,20 @@ void UpdateFootholdbyPlayer(CPlayer& player)
 
 void CheckCollideFoothold()
 {
-	for (size_t i = 0; i < Bottom.size(); ++i) {
+	for (size_t i = 0; i < Bottom.size(); ++i)
+	{
 		if (Bottom[i].Del)
 			Bottom.erase(Bottom.begin() + i);
 	}
 
-	for (size_t i = 0; i < Bottom.size(); ++i) {
+	for (size_t i = 0; i < Bottom.size(); ++i)
+	{
 		if (Bottom[i].startDel)
 			Bottom[i].Delete();
 	}
 
-	for (int i = Bottom.size() - 1; i >= 0; --i) {
+	for (int i = Bottom.size() - 1; i >= 0; --i)
+	{
 		if (Bottom[i].Del)
 		{
 			// 발판 삭제 후 점수 등 추가내용 반영
@@ -295,7 +306,7 @@ void UpdatePlayerLocation(CPlayer& p, InputData& input)
 	// 업데이트 중인지 판단 -> dx dz로 판단
 	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
 	if (p.dz && !input.bUp && !input.bDown) p.dz = 0.0f;
-	if (p.dx && !input.bLeft && !input.bRight) p.dx = 0.0f; 
+	if (p.dx && !input.bLeft && !input.bRight) p.dx = 0.0f;
 }
 
 void CheckGameOver()
@@ -339,10 +350,16 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
 
 	send(clientSock, (char*)&custom_counter, sizeof(int), 0);
-	cout << custom_counter << endl;
-	cout << inet_ntoa(clientAddr.sin_addr) << endl;
-	
-	SendPlayerData ClientData;
+	// cout << custom_counter << endl;
+	// cout << inet_ntoa(clientAddr.sin_addr) << endl;
+
+	int count = 0;
+	while (1)
+	{	
+		++count;
+	}
+
+	/*SendPlayerData ClientData;
 	int nClientDataLen;
 	while (1)
 	{
@@ -369,7 +386,28 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
 
 		SetEvent(hFootholdEvent);
+	}*/
+	return 0;
+}
+
+DWORD WINAPI ProcessTime(LPVOID arg)
+{
+	SOCKET* socks = (SOCKET*)arg;
+	SOCKET clientSocks[2] = { socks[0], socks[1] };
+
+	clock_t StartTime = clock();
+
+	while (1)
+	{
+		int CurrentTime = 120 - ((clock() - StartTime) / CLOCKS_PER_SEC);
+		for (int i = 0; i < CLIENT_NUM; ++i)
+		{
+			send(clientSocks[i], (char*)&CurrentTime, sizeof(int), 0);
+		}
+		cout << CurrentTime << endl;
+		Sleep(1000);
 	}
+
 	return 0;
 }
 
@@ -426,6 +464,6 @@ bool compare(PlayerMgr& p1, PlayerMgr& p2)
 
 void CheckGameWin(DWORD ThreadId)
 {
-	sort(ServerGameData->PMgrs, ServerGameData->PMgrs + CLIENT_NUM);
+	// sort(ServerGameData->PMgrs, ServerGameData->PMgrs + CLIENT_NUM);
 	(*ClientManager[ThreadId]).Win = (ThreadId == ServerGameData->PMgrs[0].threadId) ? true : false;
 }
