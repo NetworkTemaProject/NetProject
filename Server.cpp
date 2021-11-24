@@ -47,7 +47,7 @@ float timeInterpolation();
 void CreateMainGameScene();
 void CheckCollideFoothold(vector<Foothold>& Bottom);
 
-bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player);
+bool IsCollideFootholdByPlayer(Foothold foot, CPlayer* player);
 
 void InitServerSendData();
 void SetCilentData();
@@ -55,12 +55,12 @@ void FootHoldInit();
 void PlayerInit();
 DWORD WINAPI ProcessClient(LPVOID arg);
 
-void UpdatePlayerLocation(CPlayer& p, InputData& input);
-void UpdateFootholdbyPlayer(CPlayer& player,vector<Foothold>& Bottom);
+void UpdatePlayerLocation(CPlayer* p, InputData input);
+void UpdateFootholdbyPlayer(CPlayer* player,vector<Foothold>& Bottom);
 void SettingPlayersMine(DWORD ThreadId);
 void CheckInsertPlayerMgrData(DWORD ThreadId);
 
-bool IsGameOver(CPlayer& player);
+bool IsGameOver(CPlayer* player);
 void CheckGameWin(DWORD ThreadId);
 
 // 소켓 함수 오류 출력 후 종료
@@ -148,7 +148,7 @@ int main(int argc, char* argv[])
 
 	HANDLE hClientThread = {};
 	
-	SOCKET client_socks[2] = {};
+	SOCKET client_socks[CLIENT_NUM] = {};
 
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
@@ -168,19 +168,15 @@ int main(int argc, char* argv[])
 	}
 
 	custom_counter = CLIENT_NUM;
-	if (IsOkGameStart(custom_counter))
+	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
-		ServerInit();
+		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
+		if (hClientThread != NULL) CloseHandle(hClientThread);
+		else closesocket(client_socks[i]);
 
-		for (int i = 0; i < CLIENT_NUM; ++i)
-		{
-			hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
-			if (hClientThread != NULL)
-				CloseHandle(hClientThread);
-			else
-				closesocket(client_socks[i]);
-		}
 	}
+
+	ServerInit();
 
 	// closesocket()
 	closesocket(listen_sock);
@@ -221,13 +217,13 @@ void CreateMainGameScene()
 {
 }
 
-void UpdateFootholdbyPlayer(CPlayer& player, vector<Foothold>& Bottom)
+void UpdateFootholdbyPlayer(CPlayer* player, vector<Foothold>& Bottom)
 {
-	player.fall = true;
+	(*player).fall = true;
 	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (IsCollideFootholdByPlayer(Bottom[i], player)) {
-			player.fall = false;
-			player.dy = 0;
+			(*player).fall = false;
+			(*player).dy = 0;
 			Bottom[i].startDel = true;
 			break;
 		}
@@ -252,19 +248,25 @@ void CheckCollideFoothold(vector<Foothold>& Bottom)
 			// 발판 삭제 후 점수 등 추가내용 반영
 			// score += Bottom[i].score;
 			//++cnt;
-			Bottom.erase(Bottom.begin() + i);
+
+			// erase 하지않음 -> Del = true면 렌더링 건너뛰도록 만듦
+			// 보낼땐 배열로, SIZE 고정되므로 문제 없어짐
+			// 클라이언트는 Del = true 관련 내용만 추가하면 됨
+			// SetClinetData에선 Bottom 이걸 .Data()로 바꾸기
+			// Bottom.erase(Bottom.begin() + i);
+			// 삭제 검사할때 Del = TRUE인건 검사하지 않음
 		}
 	}
 }
 
-bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player)
+bool IsCollideFootholdByPlayer(Foothold foot, CPlayer* player)
 {
 	float b_maxX, b_minX, p_maxX, p_minX;
 	float b_maxY, b_minY, p_maxY, p_minY;
 	float b_maxZ, b_minZ, p_maxZ, p_minZ;
-	p_maxX = player.x + 0.15f; p_minX = player.x - 0.15f;
-	p_maxY = player.y + 0.1f; p_minY = player.y - 0.1f;
-	p_maxZ = player.z + 0.15f; p_minZ = player.z - 0.15f;
+	p_maxX = (*player).x + 0.15f; p_minX = (*player).x - 0.15f;
+	p_maxY = (*player).y + 0.1f; p_minY = (*player).y - 0.1f;
+	p_maxZ = (*player).z + 0.15f; p_minZ = (*player).z - 0.15f;
 
 	b_maxX = foot.mx + 0.4f; b_minX = foot.mx - 0.4f;
 	b_maxY = foot.my + 0.35f; b_minY = foot.my + 0.25f;
@@ -276,22 +278,22 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer& player)
 		return false;
 	if (b_maxY < p_minY || b_minY > p_maxY)
 		return false;
-	player.y = foot.my + 0.3f;
+	(*player).y = foot.my + 0.3f;
 	return true;
 }
 
-void UpdatePlayerLocation(CPlayer& p, InputData& input)
+void UpdatePlayerLocation(CPlayer* p, InputData input)
 {
-	if (input.bUp) p.dz = -0.1f;
-	if (input.bDown) p.dz = 0.1f;
-	if (input.bLeft) p.dx = -0.1f;
-	if (input.bRight) p.dx = 0.1f;
-	if (input.bSpace) p.Jump();
+	if (input.bUp) (*p).dz = -0.1f;
+	if (input.bDown) (*p).dz = 0.1f;
+	if (input.bLeft) (*p).dx = -0.1f;
+	if (input.bRight) (*p).dx = 0.1f;
+	if (input.bSpace) (*p).Jump();
 
 	// 업데이트 중인지 판단 -> dx dz로 판단
 	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
-	if (p.dz && !input.bUp && !input.bDown) p.dz = 0.0f;
-	if (p.dx && !input.bLeft && !input.bRight) p.dx = 0.0f; 
+	if ((*p).dz && !input.bUp && !input.bDown) (*p).dz = 0.0f;
+	if ((*p).dx && !input.bLeft && !input.bRight) (*p).dx = 0.0f;
 }
 
 void FootHoldInit()
@@ -305,7 +307,6 @@ void PlayerInit()
 {
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
-		ServerGameData.PMgrs[i].player = CPlayer();
 		ServerGameData.PMgrs[i].player.x = 0;	// 좌표 값 어떻게 설정할 것인지(랜덤 or 지정) 나중에 상의!
 		ServerGameData.PMgrs[i].player.y = 5;
 		ServerGameData.PMgrs[i].player.z = 0;
@@ -327,15 +328,15 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
 
 	send(clientSock, (char*)&custom_counter, sizeof(int), 0);
-	cout << custom_counter << endl;
-	cout << inet_ntoa(clientAddr.sin_addr) << endl;
+	//cout << custom_counter << endl;
+	//cout << inet_ntoa(clientAddr.sin_addr) << endl;
 
 	SendPlayerData ClientData;
 	int nClientDataLen = 0;
 	while (1)
 	{
 		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
-		//if (retval != WAIT_OBJECT_0) break;
+		if (retval != WAIT_OBJECT_0) break;
 
 		DWORD threadId = GetCurrentThreadId();
 		CheckInsertPlayerMgrData(threadId);
@@ -344,12 +345,12 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
 
 		SettingPlayersMine(threadId);
-		UpdatePlayerLocation((*ClientManager[threadId]).player, ClientData.Input);
+		UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
 		(*ClientManager[threadId]).player.Update();
-		UpdateFootholdbyPlayer((*ClientManager[threadId]).player,ServerGameData.Bottom);
+		UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player,ServerGameData.Bottom);
 		CheckCollideFoothold(ServerGameData.Bottom);
 
-		(*ClientManager[threadId]).bGameOver = IsGameOver((*ClientManager[threadId]).player);
+		(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
 		CheckGameWin(threadId);
 
 		// SetCilentData();
@@ -397,9 +398,9 @@ void CheckInsertPlayerMgrData(DWORD ThreadId)
 }
 
 // 시간이 초과되거나 플레이어가 추락했을 경우를 검사
-bool IsGameOver(CPlayer& player)
+bool IsGameOver(CPlayer* player)
 {
-	if (player.y < UNDER) return true;
+	if ((*player).y < UNDER) return true;
 	// 시간 끝났을때 조건도 추가필요
 	return false;
 }
