@@ -42,6 +42,7 @@ public:
 	bool startDel = false;
 
 public:
+	Foothold() {}
 	Foothold(float x, float y, float z, float R, float G, float B) :
 		mx{ x }, my{ y }, mz{ z },
 		cx{ foothold_sizex }, cy{ foothold_sizey }, cz{ foothold_sizez },

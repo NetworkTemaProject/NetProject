@@ -22,7 +22,6 @@ void make_fragmentShader();
 
 void renderBitmapCharacher(float, float, float, void*, char*);
 void Print_word(float, float, float, float, int, char*);
-void check_GameOver();
 void Print_GameState();	// 현재 게임 상태에 따라 화면에 Title String, Waiting String, over을 출력하는 함수 
 void check_Bonus();
 
@@ -185,7 +184,7 @@ struct SendGameData
 {
 	PlayerMgr PMgr[CLIENT_NUM];
 	clock_t ServerTime;
-	std::vector<Foothold> Bottom;
+	Foothold Bottom[N * N * N];
 };
 
 SendPlayerData myPlayer;
@@ -427,8 +426,10 @@ GLvoid drawScene()
 	glUniformMatrix4fv(projection, 1, GL_FALSE, &ptrans[0][0]);
 
 	glBindVertexArray(vao);
-	for (size_t i = 0; i < ServerDatas.Bottom.size(); ++i)
+	for (size_t i = 0; i < N*N*N; ++i)
 	{
+		if (ServerDatas.Bottom[i].Del) continue;
+
 		ServerDatas.Bottom[i].Draw_Start();
 		glUniform3f(color_location, ServerDatas.Bottom[i].r, ServerDatas.Bottom[i].g, ServerDatas.Bottom[i].b);
 		glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(glm::mat4(ServerDatas.Bottom[i].Drawing)));

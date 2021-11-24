@@ -18,7 +18,7 @@ clock_t serverDelta_time;
 struct SendGameData{
 	PlayerMgr PMgrs[CLIENT_NUM];
 	clock_t ServerTime;
-	vector<Foothold> Bottom;
+	Foothold Bottom[N * N * N];
 };
 
 bool IsCollisionPandF;
@@ -32,6 +32,7 @@ int portnum;
 
 bool Win;
 
+vector<Foothold> Bottom;
 map<DWORD, PlayerMgr*> ClientManager;
 
 SendGameData ServerGameData;
@@ -221,6 +222,8 @@ void UpdateFootholdbyPlayer(CPlayer* player, vector<Foothold>& Bottom)
 {
 	(*player).fall = true;
 	for (size_t i = 0; i < Bottom.size(); ++i) {
+		if (Bottom[i].Del) continue;
+
 		if (IsCollideFootholdByPlayer(Bottom[i], player)) {
 			(*player).fall = false;
 			(*player).dy = 0;
@@ -234,7 +237,7 @@ void CheckCollideFoothold(vector<Foothold>& Bottom)
 {
 	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (Bottom[i].Del)
-			Bottom.erase(Bottom.begin() + i);
+			Bottom[i].startDel = false;
 	}
 
 	for (size_t i = 0; i < Bottom.size(); ++i) {
@@ -248,13 +251,6 @@ void CheckCollideFoothold(vector<Foothold>& Bottom)
 			// 발판 삭제 후 점수 등 추가내용 반영
 			// score += Bottom[i].score;
 			//++cnt;
-
-			// erase 하지않음 -> Del = true면 렌더링 건너뛰도록 만듦
-			// 보낼땐 배열로, SIZE 고정되므로 문제 없어짐
-			// 클라이언트는 Del = true 관련 내용만 추가하면 됨
-			// SetClinetData에선 Bottom 이걸 .Data()로 바꾸기
-			// Bottom.erase(Bottom.begin() + i);
-			// 삭제 검사할때 Del = TRUE인건 검사하지 않음
 		}
 	}
 }
@@ -298,9 +294,9 @@ void UpdatePlayerLocation(CPlayer* p, InputData input)
 
 void FootHoldInit()
 {
-	ServerGameData.Bottom.clear();
-	MakeFoothold(ServerGameData.Bottom);
-	DeleteRandomFoothold(ServerGameData.Bottom);
+	Bottom.clear();
+	MakeFoothold(Bottom);
+	DeleteRandomFoothold(Bottom);
 }
 
 void PlayerInit()
@@ -347,13 +343,13 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		SettingPlayersMine(threadId);
 		UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
 		(*ClientManager[threadId]).player.Update();
-		UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player,ServerGameData.Bottom);
-		CheckCollideFoothold(ServerGameData.Bottom);
+		UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player,Bottom);
+		CheckCollideFoothold(Bottom);
 
 		(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
 		CheckGameWin(threadId);
 
-		// SetCilentData();
+		SetCilentData();
 
 		int nServerDataLen = sizeof(SendGameData);
 		send(clientSock, (char*)&nServerDataLen, sizeof(int), 0);
@@ -371,6 +367,7 @@ void InitServerSendData()
 
 void SetCilentData()
 {
+	copy(Bottom.begin(), Bottom.end(), ServerGameData.Bottom);
 }
 
 // 클라이언트에서 자신의 정보와 타인의 정보 구분을 위한 멤버변수 세팅을 위한 함수
