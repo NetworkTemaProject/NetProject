@@ -399,7 +399,7 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 
 	while (1)
 	{
-		int CurrentTime = 120 - ((clock() - StartTime) / CLOCKS_PER_SEC);
+		int CurrentTime = 120 - ((clock() - StartTime) / CLOCKS_PER_SEC);	
 		for (int i = 0; i < CLIENT_NUM; ++i)
 		{
 			send(clientSocks[i], (char*)&CurrentTime, sizeof(int), 0);

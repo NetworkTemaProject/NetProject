@@ -203,6 +203,8 @@ bool IsPlayingGame();
 bool IsGameOverState();
 int myIndex = -1;
 
+volatile int CurrentTime = 0; // 현재 남은 게임 시간
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 // 사용자 정의 데이터 수신 함수
@@ -507,6 +509,9 @@ void Print_GameState()
 		{
 			char playing[8] = "Playing";
 			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, playing);
+			char cTime[5];
+			_itoa(CurrentTime, cTime, 10);
+			renderBitmapCharacher(0.0f, 0.9f, 0, (void*)font, cTime);
 			break;
 		}
 		default:
@@ -801,7 +806,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		CurrentGameState = static_cast<int>(EGameState::PLAYING);
 	}
 
-	int CurrentTime = 0;
 	while (1)
 	{
 		recvn(sock, (char*)&CurrentTime, sizeof(int), 0);
