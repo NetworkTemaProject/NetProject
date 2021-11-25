@@ -810,14 +810,15 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	char buf[BUFSIZE];
 
 	int nClientDataLen = sizeof(SendPlayerData);
+	int nServerDataLen = sizeof(SendGameData);
 	while (1)
 	{
 		// myPlayer 송신
-		send(sock, (char*)&nClientDataLen, sizeof(int), 0);
+		//send(sock, (char*)&nClientDataLen, sizeof(int), 0);
 		send(sock, (char*)&myPlayer, nClientDataLen, 0);
 		// ServerGameData 수신
-		recvn(sock, (char*)&len, sizeof(int), 0);
-		recvn(sock, (char*)&ServerDatas, len, 0);
+		//recvn(sock, (char*)&len, sizeof(int), 0);
+		recvn(sock, (char*)&ServerDatas, nServerDataLen, 0);
 
 		for (int i = 0; i < CLIENT_NUM; ++i)
 		{
@@ -825,7 +826,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 			else otherIndex = i;
 		}
 		if (IsGameOverState()) CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
-		//ServerDatas = reinterpret_cast<SendGameData*>(&buf); -> 기존내용 안돌아가면 이걸로 테스트
 	}
 
 	// closesocket()

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 #include <algorithm>
+#include <time.h>
 #include "Player.h"
 #include "Foothold.h"
 
@@ -168,6 +169,8 @@ int main(int argc, char* argv[])
 			return 1;
 	}
 
+
+
 	custom_counter = CLIENT_NUM;
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
@@ -296,7 +299,7 @@ void FootHoldInit()
 {
 	Bottom.clear();
 	MakeFoothold(Bottom);
-	DeleteRandomFoothold(Bottom);
+	//DeleteRandomFoothold(Bottom);
 }
 
 void PlayerInit()
@@ -328,17 +331,21 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	//cout << inet_ntoa(clientAddr.sin_addr) << endl;
 
 	SendPlayerData ClientData;
-	int nClientDataLen = 0;
+	//int nClientDataLen = 0;
+	int nServerDataLen = sizeof(SendGameData);
+	int nClientDataLen = sizeof(SendPlayerData);
 	while (1)
 	{
+		Sleep(40);
 		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
 		if (retval != WAIT_OBJECT_0) break;
 
 		DWORD threadId = GetCurrentThreadId();
 		CheckInsertPlayerMgrData(threadId);
 
-		recvn(clientSock, (char*)&nClientDataLen, sizeof(int), 0);       
-		recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
+		//recvn(clientSock, (char*)&nClientDataLen, sizeof(int), 0);       
+		retval = recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
+		if (retval == SOCKET_ERROR) err_display("");
 
 		SettingPlayersMine(threadId);
 		UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
@@ -346,14 +353,14 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player,Bottom);
 		CheckCollideFoothold(Bottom);
 
-		(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
+		//(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
 		CheckGameWin(threadId);
 
 		SetCilentData();
 
-		int nServerDataLen = sizeof(SendGameData);
-		send(clientSock, (char*)&nServerDataLen, sizeof(int), 0);
-		send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
+		//send(clientSock, (char*)&nServerDataLen, sizeof(int), 0);
+		retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
+		if (retval == SOCKET_ERROR) err_display("");
 
 		SetEvent(hFootholdEvent);
 	}
