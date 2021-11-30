@@ -304,7 +304,7 @@ int main(int argc, char** argv)
 
 	init();
 
-	Init_Game();
+	//Init_Game();
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
@@ -498,7 +498,7 @@ void Print_GameState()
 		}
 		case static_cast<int>(EGameState::GAMEOVER):
 		{
-			if((ServerDatas.PMgr[myIndex]).Win) renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, over);
+			if((ServerDatas.PMgr[myIndex]).Win) renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, win);
 			else renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, over);
 			break;
 		}
@@ -619,9 +619,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		}
 		case 'v':
 		case 'V':
-			if (IsChangeCamera()| bChangeCam)
-				bChangeCam != bChangeCam;
-
+			if (IsChangeCamera()|| bChangeCam) bChangeCam != bChangeCam;
 			break; 
 	}
 

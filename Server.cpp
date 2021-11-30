@@ -230,6 +230,10 @@ void UpdateFootholdbyPlayer(CPlayer* player, vector<Foothold>& Bottom)
 		if (IsCollideFootholdByPlayer(Bottom[i], player)) {
 			(*player).fall = false;
 			(*player).dy = 0;
+			
+			if(!Bottom[i].startDel)
+				(*player).m_nScore += Bottom[i].score;
+			
 			Bottom[i].startDel = true;
 			break;
 		}
@@ -245,15 +249,8 @@ void CheckCollideFoothold(vector<Foothold>& Bottom)
 
 	for (size_t i = 0; i < Bottom.size(); ++i) {
 		if (Bottom[i].startDel)
-			Bottom[i].Delete();
-	}
-
-	for (int i = Bottom.size() - 1; i >= 0; --i) {
-		if (Bottom[i].Del)
 		{
-			// 발판 삭제 후 점수 등 추가내용 반영
-			// score += Bottom[i].score;
-			//++cnt;
+			Bottom[i].Delete();
 		}
 	}
 }
@@ -283,6 +280,10 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer* player)
 
 void UpdatePlayerLocation(CPlayer* p, InputData input)
 {
+
+	if ((*p).dz) (*p).dz = 0.0f;
+	if ((*p).dx) (*p).dx = 0.0f;
+
 	if (input.bUp) (*p).dz = -0.1f;
 	if (input.bDown) (*p).dz = 0.1f;
 	if (input.bLeft) (*p).dx = -0.1f;
@@ -396,6 +397,7 @@ void CheckInsertPlayerMgrData(DWORD ThreadId)
 			{
 				ServerGameData.PMgrs[i].threadId = ThreadId;
 				ClientManager.insert({ ThreadId, &ServerGameData.PMgrs[i] });
+				break;
 			}
 		}
 	}

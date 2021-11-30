@@ -145,15 +145,15 @@ void CPlayer::Jump()
 {     
 	if (fall == false) {
 		fall = true;
-		dy = 0.25;
+		dy = 0.2f;
 	}
 }
 
 void CPlayer::Fall()
 {
 	if(fall)
-		if (dy > -0.2f)
-			dy -= 0.03f;
+		if (dy > -0.1f)
+			dy -= 0.01f;
 }
 
 void CPlayer::get_angle()
