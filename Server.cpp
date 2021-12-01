@@ -58,6 +58,7 @@ void SetCilentData();
 void FootHoldInit();
 void PlayerInit();
 DWORD WINAPI ProcessClient(LPVOID arg);
+DWORD WINAPI ProcessTime(LPVOID arg);
 
 void UpdatePlayerLocation(CPlayer* p, InputData input);
 void UpdateFootholdbyPlayer(CPlayer* player,vector<Foothold>& Bottom);
@@ -119,6 +120,8 @@ int recvn(SOCKET s, char* buf, int len, int flags)
 using namespace std;
 int main(int argc, char* argv[])
 {
+	ServerInit();
+
 	int retval;
 
 	// 윈속 초기화
@@ -128,7 +131,7 @@ int main(int argc, char* argv[])
 
 	// socket()
 	SOCKET listen_sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (listen_sock == INVALID_SOCKET) 
+	if (listen_sock == INVALID_SOCKET)
 		err_quit("socket()");
 
 	// bind()
@@ -139,20 +142,21 @@ int main(int argc, char* argv[])
 	//serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
 	retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
-	if (retval == SOCKET_ERROR) 
+	if (retval == SOCKET_ERROR)
 		err_quit("bind()");
 
 	// listen()
 	retval = listen(listen_sock, SOMAXCONN);
-	if (retval == SOCKET_ERROR) 
+	if (retval == SOCKET_ERROR)
 		err_quit("listen()");
 
 	// 데이터 통신에 사용할 변수
 	SOCKADDR_IN clientaddr;
 	int addrlen;
 
-	HANDLE hClientThread = {};
-	
+	HANDLE hClientThread[2] = {};
+	HANDLE hTimeThread = {};
+
 	SOCKET client_socks[CLIENT_NUM] = {};
 
 	for (int i = 0; i < CLIENT_NUM; ++i)
@@ -171,7 +175,7 @@ int main(int argc, char* argv[])
 
 		// 신호 상태
 		hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
-		if (hFootholdEvent == NULL) 
+		if (hFootholdEvent == NULL)
 			return 1;
 	}
 
@@ -180,13 +184,16 @@ int main(int argc, char* argv[])
 	custom_counter = CLIENT_NUM;
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
-		hClientThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
-		if (hClientThread != NULL) CloseHandle(hClientThread);
-		else closesocket(client_socks[i]);
-
+		hClientThread[i] = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
+		/*if (hClientThread != NULL) CloseHandle(hClientThread);
+		else closesocket(client_socks[i]);*/
 	}
 
-	ServerInit();
+	hTimeThread = CreateThread(NULL, 0, ProcessTime, (LPVOID)client_socks, 0, NULL);
+
+	WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
+	if (hTimeThread != NULL)
+		WaitForSingleObject(hTimeThread, INFINITE);
 
 	// closesocket()
 	closesocket(listen_sock);
@@ -334,11 +341,20 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
 
 	send(clientSock, (char*)&custom_counter, sizeof(int), 0);
+	// cout << custom_counter << endl;
+	// cout << inet_ntoa(clientAddr.sin_addr) << endl;
 
 	SendPlayerData ClientData;
 	//int nClientDataLen = 0;
 	int nServerDataLen = sizeof(SendGameData);
 	int nClientDataLen = sizeof(SendPlayerData);
+
+	int count = 0;
+	while (1)
+	{	
+		++count;
+	}
+
 	while (1)
 	{
 		Sleep(40);
@@ -369,6 +385,27 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 		SetEvent(hFootholdEvent);
 	}
+	return 0;
+}
+
+DWORD WINAPI ProcessTime(LPVOID arg)
+{
+	SOCKET* socks = (SOCKET*)arg;
+	SOCKET clientSocks[2] = { socks[0], socks[1] };
+
+	clock_t StartTime = clock();
+
+	while (1)
+	{
+		int CurrentTime = 120 - ((clock() - StartTime) / CLOCKS_PER_SEC);	
+		for (int i = 0; i < CLIENT_NUM; ++i)
+		{
+			send(clientSocks[i], (char*)&CurrentTime, sizeof(int), 0);
+		}
+		cout << CurrentTime << endl;
+		Sleep(1000);
+	}
+
 	return 0;
 }
 
