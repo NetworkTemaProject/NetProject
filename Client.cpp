@@ -832,8 +832,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 			//send(sock, (char*)&nClientDataLen, sizeof(int), 0);
 			send(sock, (char*)&myPlayer, nClientDataLen, 0);
 
-
-
 			// ServerGameData 수신
 			//recvn(sock, (char*)&len, sizeof(int), 0);
 			recvn(sock, (char*)&ServerDatas, nServerDataLen, 0);

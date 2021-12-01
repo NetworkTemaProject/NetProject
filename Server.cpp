@@ -42,6 +42,7 @@ SendGameData ServerGameData;
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
+HANDLE hGameEvent, hTimeEvent;	// 소켓 동기화 작업을 위한 이벤트 핸들 변수
 
 void ServerInit();
 BOOL IsOkGameStart(int PlayerCount);
@@ -122,6 +123,13 @@ int main(int argc, char* argv[])
 {
 	ServerInit();
 
+	hGameEvent = CreateEvent(NULL, FALSE, TRUE, NULL);	// TRUE: 게임 정보 보내기 완료
+	if (hGameEvent == NULL)
+		return 1;
+	hTimeEvent = CreateEvent(NULL, FALSE, FALSE, NULL); // TRUE: 시간 정보 보내기 완료
+	if (hTimeEvent == NULL)
+		return 1;
+
 	int retval;
 
 	// 윈속 초기화
@@ -179,8 +187,6 @@ int main(int argc, char* argv[])
 			return 1;
 	}
 
-
-
 	custom_counter = CLIENT_NUM;
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
@@ -194,6 +200,9 @@ int main(int argc, char* argv[])
 	WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
 	if (hTimeThread != NULL)
 		WaitForSingleObject(hTimeThread, INFINITE);
+	
+	CloseHandle(hGameEvent);
+	CloseHandle(hTimeEvent);
 
 	// closesocket()
 	closesocket(listen_sock);
@@ -351,6 +360,8 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	while (1)
 	{
 		Sleep(40);
+		WaitForSingleObject(hTimeEvent, INFINITE);
+
 		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
 		if (retval != WAIT_OBJECT_0) 
 			break;
@@ -382,6 +393,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 			err_display("");
 
 		SetEvent(hFootholdEvent);
+		SetEvent(hGameEvent);
 	}
 	return 0;
 }
@@ -397,6 +409,7 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 
 	while (1)
 	{
+		WaitForSingleObject(hGameEvent, INFINITE);
 		int CurrentTime = 120 - ((clock() - StartTime) / CLOCKS_PER_SEC);	
 
 		for (int i = 0; i < CLIENT_NUM; ++i)
@@ -406,6 +419,7 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 		}
 
 		cout << CurrentTime << endl;
+		SetEvent(hTimeEvent);
 		Sleep(1000);
 	}
 
