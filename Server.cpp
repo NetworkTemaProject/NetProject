@@ -9,6 +9,8 @@
 #include "Foothold.h"
 
 #define SERVERPORT 9000
+//#define SERVERIP "192.168.82.96"
+#define SERVERIP "127.0.0.1"
 
 volatile int custom_counter = 0;
 
@@ -134,6 +136,7 @@ int main(int argc, char* argv[])
 	ZeroMemory(&serveraddr, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
 	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	//serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
 	retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
 	if (retval == SOCKET_ERROR) 
@@ -157,6 +160,9 @@ int main(int argc, char* argv[])
 		//accept()
 		addrlen = sizeof(clientaddr);
 		client_socks[i] = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
+
+		//int opt_val = TRUE;
+		//setsockopt(client_socks[i], IPPROTO_TCP, TCP_NODELAY, (const char*)&opt_val, sizeof(opt_val));
 		if (client_socks[i] == INVALID_SOCKET)
 		{
 			err_display("accept()");
@@ -328,8 +334,6 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
 
 	send(clientSock, (char*)&custom_counter, sizeof(int), 0);
-	//cout << custom_counter << endl;
-	//cout << inet_ntoa(clientAddr.sin_addr) << endl;
 
 	SendPlayerData ClientData;
 	//int nClientDataLen = 0;
@@ -354,7 +358,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player,Bottom);
 		CheckCollideFoothold(Bottom);
 
-		//(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
+		(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
 		CheckGameWin(threadId);
 
 		SetCilentData();

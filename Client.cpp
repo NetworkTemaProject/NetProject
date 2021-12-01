@@ -195,6 +195,8 @@ SOCKADDR_IN serveraddr;
 SendGameData ServerDatas;
 
 #define SERVERIP "127.0.0.1"
+//#define SERVERIP "192.168.123.41"
+//#define SERVERIP "192.168.82.96"
 #define SERVERPORT 9000
 
 void TimerFunc();
@@ -410,7 +412,6 @@ GLvoid drawScene()
 	if (myIndex != -1)
 	{
 		showIndex = (bChangeCam) ? otherIndex : myIndex;
-		// 다른 플레이어 없을 때 오류나는거 방지
 		if (showIndex == -1) showIndex = myIndex;
 
 		vtrans = glm::lookAt(glm::vec3((ServerDatas.PMgr[showIndex]).player.x, (ServerDatas.PMgr[showIndex]).player.y + 2, (ServerDatas.PMgr[showIndex]).player.z + 2),
@@ -466,17 +467,12 @@ GLvoid drawScene()
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
 
-	if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
-		Time_score();
-
-	tine = present - start;
-
 	if(myIndex != -1)
 		Print_word(0.5f, 0.8f, 0.7f, 0.8f, (ServerDatas.PMgr[myIndex]).player.m_nScore,word1);
 
 	// 시간 처리 후 ServerData의 시간으로 변경필요 (check_bonus 함수도)
 	Print_word(0.5f, 0.7f, 0.8f, 0.7f, tine, word2);
-	check_Bonus();
+	//check_Bonus();
 	Print_GameState();
 
 	glutSwapBuffers();
