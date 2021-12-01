@@ -185,8 +185,8 @@ int main(int argc, char* argv[])
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
 		hClientThread[i] = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
-		/*if (hClientThread != NULL) CloseHandle(hClientThread);
-		else closesocket(client_socks[i]);*/
+		if (hClientThread == NULL)
+			closesocket(client_socks[i]);
 	}
 
 	hTimeThread = CreateThread(NULL, 0, ProcessTime, (LPVOID)client_socks, 0, NULL);
@@ -341,32 +341,29 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
 
 	send(clientSock, (char*)&custom_counter, sizeof(int), 0);
-	// cout << custom_counter << endl;
-	// cout << inet_ntoa(clientAddr.sin_addr) << endl;
 
 	SendPlayerData ClientData;
 	//int nClientDataLen = 0;
 	int nServerDataLen = sizeof(SendGameData);
 	int nClientDataLen = sizeof(SendPlayerData);
-
-	int count = 0;
-	while (1)
-	{	
-		++count;
-	}
+	short opcode = 0;
 
 	while (1)
 	{
 		Sleep(40);
 		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
-		if (retval != WAIT_OBJECT_0) break;
+		if (retval != WAIT_OBJECT_0) 
+			break;
 
 		DWORD threadId = GetCurrentThreadId();
 		CheckInsertPlayerMgrData(threadId);
 
+		send(clientSock, (char*)&opcode, sizeof(short), 0);
+
 		//recvn(clientSock, (char*)&nClientDataLen, sizeof(int), 0);       
 		retval = recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
-		if (retval == SOCKET_ERROR) err_display("");
+		if (retval == SOCKET_ERROR) 
+			err_display("");
 
 		SettingPlayersMine(threadId);
 		UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
@@ -381,7 +378,8 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 		//send(clientSock, (char*)&nServerDataLen, sizeof(int), 0);
 		retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
-		if (retval == SOCKET_ERROR) err_display("");
+		if (retval == SOCKET_ERROR) 
+			err_display("");
 
 		SetEvent(hFootholdEvent);
 	}
@@ -395,13 +393,18 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 
 	clock_t StartTime = clock();
 
+	short opcode = 1;
+
 	while (1)
 	{
 		int CurrentTime = 120 - ((clock() - StartTime) / CLOCKS_PER_SEC);	
+
 		for (int i = 0; i < CLIENT_NUM; ++i)
 		{
+			send(clientSocks[i], (char*)&opcode, sizeof(short), 0);
 			send(clientSocks[i], (char*)&CurrentTime, sizeof(int), 0);
 		}
+
 		cout << CurrentTime << endl;
 		Sleep(1000);
 	}

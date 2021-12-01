@@ -342,8 +342,8 @@ void Timerfunction(int value)
 		{
 			break;
 		}
-	}			
-	
+	}
+
 	glutPostRedisplay();
 }
 
@@ -429,7 +429,7 @@ GLvoid drawScene()
 	glUniformMatrix4fv(projection, 1, GL_FALSE, &ptrans[0][0]);
 
 	glBindVertexArray(vao);
-	for (size_t i = 0; i < N*N*N; ++i)
+	for (size_t i = 0; i < N * N * N; ++i)
 	{
 		if (ServerDatas.Bottom[i].Del) continue;
 
@@ -469,8 +469,8 @@ GLvoid drawScene()
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
 
-	if(myIndex != -1)
-		Print_word(0.5f, 0.8f, 0.7f, 0.8f, (ServerDatas.PMgr[myIndex]).player.m_nScore,word1);
+	if (myIndex != -1)
+		Print_word(0.5f, 0.8f, 0.7f, 0.8f, (ServerDatas.PMgr[myIndex]).player.m_nScore, word1);
 
 	// 시간 처리 후 ServerData의 시간으로 변경필요 (check_bonus 함수도)
 	Print_word(0.5f, 0.7f, 0.8f, 0.7f, tine, word2);
@@ -496,7 +496,7 @@ void Print_GameState()
 		}
 		case static_cast<int>(EGameState::GAMEOVER):
 		{
-			if((ServerDatas.PMgr[myIndex]).Win) renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, win);
+			if ((ServerDatas.PMgr[myIndex]).Win) renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, win);
 			else renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, over);
 			break;
 		}
@@ -620,8 +620,8 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		}
 		case 'v':
 		case 'V':
-			if (IsChangeCamera()|| bChangeCam) bChangeCam != bChangeCam;
-			break; 
+			if (IsChangeCamera() || bChangeCam) bChangeCam != bChangeCam;
+			break;
 	}
 
 	glutPostRedisplay();
@@ -809,11 +809,11 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		CurrentGameState = static_cast<int>(EGameState::PLAYING);
 	}
 
-	while (1)
+	/*while (1)
 	{
 		recvn(sock, (char*)&CurrentTime, sizeof(int), 0);
 		cout << CurrentTime << endl;
-	}
+	}*/
 
 	int len = 0;
 	char buf[BUFSIZE];
@@ -822,19 +822,38 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	int nServerDataLen = sizeof(SendGameData);
 	while (1)
 	{
-		// myPlayer 송신
-		//send(sock, (char*)&nClientDataLen, sizeof(int), 0);
-		send(sock, (char*)&myPlayer, nClientDataLen, 0);
-		// ServerGameData 수신
-		//recvn(sock, (char*)&len, sizeof(int), 0);
-		recvn(sock, (char*)&ServerDatas, nServerDataLen, 0);
+		short opcode = 0;
+		recvn(sock, (char*)&opcode, sizeof(short), 0);
 
-		for (int i = 0; i < CLIENT_NUM; ++i)
+		if (opcode == 0)
 		{
-			if (ServerDatas.PMgr[i].mine) myIndex = i;
-			else otherIndex = i;
+			cout << opcode << endl;
+			// myPlayer 송신
+			//send(sock, (char*)&nClientDataLen, sizeof(int), 0);
+			send(sock, (char*)&myPlayer, nClientDataLen, 0);
+
+
+
+			// ServerGameData 수신
+			//recvn(sock, (char*)&len, sizeof(int), 0);
+			recvn(sock, (char*)&ServerDatas, nServerDataLen, 0);
+
+			for (int i = 0; i < CLIENT_NUM; ++i)
+			{
+				if (ServerDatas.PMgr[i].mine) myIndex = i;
+				else otherIndex = i;
+			}
 		}
-		if (IsGameOverState()) CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
+		else if (opcode == 1)
+		{
+			recvn(sock, (char*)&CurrentTime, sizeof(int), 0);
+			cout << CurrentTime << endl;
+		}
+
+		if (IsGameOverState())
+		{
+			CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
+		}
 	}
 
 	// closesocket()
