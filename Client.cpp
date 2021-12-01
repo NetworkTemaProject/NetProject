@@ -633,21 +633,25 @@ GLvoid KeyboardUp(unsigned char key, int x, int y)
 	{
 		switch (key)
 		{
+			case 'W':
 			case 'w':
 			{
 				myPlayer.Input.bUp = false;
 				break;
 			}
+			case 'S':
 			case 's':
 			{
 				myPlayer.Input.bDown = false;
 				break;
 			}
+			case 'A':
 			case 'a':
 			{
 				myPlayer.Input.bLeft = false;
 				break;
 			}
+			case 'D':
 			case 'd':
 			{
 				myPlayer.Input.bRight = false;
