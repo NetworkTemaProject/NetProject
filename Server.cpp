@@ -359,7 +359,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		++count;
 	}
 
-	/*SendPlayerData ClientData;
+	SendPlayerData ClientData;
 	int nClientDataLen;
 	while (1)
 	{
@@ -386,7 +386,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
 
 		SetEvent(hFootholdEvent);
-	}*/
+	}
 	return 0;
 }
 
@@ -420,7 +420,7 @@ void InitServerSendData()
 {
 	ServerGameData->PMgrs = Players;
 	ServerGameData->Bottom = Bottom;
-	//ServerGameData.ServerTime;
+	// ServerGameData.ServerTime;
 }
 
 // 클라이언트에서 자신의 정보와 타인의 정보 구분을 위한 멤버변수 세팅을 위한 함수
@@ -464,6 +464,6 @@ bool compare(PlayerMgr& p1, PlayerMgr& p2)
 
 void CheckGameWin(DWORD ThreadId)
 {
-	// sort(ServerGameData->PMgrs, ServerGameData->PMgrs + CLIENT_NUM);
+	sort(ServerGameData->PMgrs, ServerGameData->PMgrs + CLIENT_NUM);
 	(*ClientManager[ThreadId]).Win = (ThreadId == ServerGameData->PMgrs[0].threadId) ? true : false;
 }

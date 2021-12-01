@@ -634,21 +634,25 @@ GLvoid KeyboardUp(unsigned char key, int x, int y)
 	{
 		switch (key)
 		{
+			case 'W':
 			case 'w':
 			{
 				myPlayer.Input.bUp = false;
 				break;
 			}
+			case 'S':
 			case 's':
 			{
 				myPlayer.Input.bDown = false;
 				break;
 			}
+			case 'A':
 			case 'a':
 			{
 				myPlayer.Input.bLeft = false;
 				break;
 			}
+			case 'D':
 			case 'd':
 			{
 				myPlayer.Input.bRight = false;
@@ -815,22 +819,22 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	int len;
 	char buf[BUFSIZE];
 
-	//int nClientDataLen = sizeof(SendPlayerData);
-	//while (1)
-	//{
-	//	// myPlayer 송신
-	//	send(sock, (char*)&nClientDataLen, sizeof(int), 0);
-	//	send(sock, (char*)&myPlayer, nClientDataLen, 0);
-	//	// ServerGameData 수신
-	//	recvn(sock, (char*)&len, sizeof(int), 0);
-	//	recvn(sock, (char*)&ServerDatas, len, 0);
+	int nClientDataLen = sizeof(SendPlayerData);
+	while (1)
+	{
+		// myPlayer 송신
+		send(sock, (char*)&nClientDataLen, sizeof(int), 0);
+		send(sock, (char*)&myPlayer, nClientDataLen, 0);
+		// ServerGameData 수신
+		recvn(sock, (char*)&len, sizeof(int), 0);
+		recvn(sock, (char*)&ServerDatas, len, 0);
 
-	//	for (int i = 0; i < CLIENT_NUM; ++i)
-	//		if (ServerDatas->PMgr[i].mine) myIndex = i;
+		for (int i = 0; i < CLIENT_NUM; ++i)
+			if (ServerDatas->PMgr[i].mine) myIndex = i;
 
-	//	if (IsGameOverState()) CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
-	//	//ServerDatas = reinterpret_cast<SendGameData*>(&buf); -> 기존내용 안돌아가면 이걸로 테스트
-	//}
+		if (IsGameOverState()) CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
+		//ServerDatas = reinterpret_cast<SendGameData*>(&buf); -> 기존내용 안돌아가면 이걸로 테스트
+	}
 
 	// closesocket()
 	closesocket(sock);
