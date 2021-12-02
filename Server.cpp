@@ -188,16 +188,16 @@ int main(int argc, char* argv[])
 	}
 
 	custom_counter = CLIENT_NUM;
-	for (int i = 0; i < CLIENT_NUM; ++i)
+	/*for (int i = 0; i < CLIENT_NUM; ++i)
 	{
 		hClientThread[i] = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
-		if (hClientThread == NULL)
+		if (hClientThread[i] == NULL)
 			closesocket(client_socks[i]);
-	}
+	}*/
 
 	hTimeThread = CreateThread(NULL, 0, ProcessTime, (LPVOID)client_socks, 0, NULL);
 
-	WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
+	// WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
 	if (hTimeThread != NULL)
 		WaitForSingleObject(hTimeThread, INFINITE);
 	
@@ -402,25 +402,40 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 {
 	SOCKET* socks = (SOCKET*)arg;
 	SOCKET clientSocks[2] = { socks[0], socks[1] };
+	
+	int GameTime = 120;
+	
+	serverDelta_time = 1 / 50.0;
 
-	clock_t StartTime = clock();
-
+	clock_t t = 0.0;
+	clock_t CurrentTime = clock();
+	
 	short opcode = 1;
 
 	while (1)
 	{
-		WaitForSingleObject(hGameEvent, INFINITE);
-		int CurrentTime = 120 - ((clock() - StartTime) / CLOCKS_PER_SEC);	
-
-		for (int i = 0; i < CLIENT_NUM; ++i)
+		clock_t newTime = clock();
+		clock_t frameTime = newTime - CurrentTime;
+		CurrentTime = newTime;
+		
+		if (t >= 1.0)
 		{
-			send(clientSocks[i], (char*)&opcode, sizeof(short), 0);
-			send(clientSocks[i], (char*)&CurrentTime, sizeof(int), 0);
+			// WaitForSingleObject(hGameEvent, INFINITE);
+			--GameTime;
+			for (int i = 0; i < CLIENT_NUM; ++i)
+			{
+				send(clientSocks[i], (char*)&opcode, sizeof(short), 0);
+				send(clientSocks[i], (char*)&GameTime, sizeof(int), 0);
+			}
+			t = 0;
+			cout << GameTime << endl;
+			
 		}
-
-		cout << CurrentTime << endl;
+		else
+		{
+			t += serverDelta_time;
+		}
 		SetEvent(hTimeEvent);
-		Sleep(1000);
 	}
 
 	return 0;
