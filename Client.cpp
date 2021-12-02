@@ -195,9 +195,11 @@ SOCKADDR_IN serveraddr;
 SendGameData ServerDatas;
 
 #define SERVERIP "127.0.0.1"
-//#define SERVERIP "192.168.123.41"
+//#define SERVERIP "192.168.122.18"
 //#define SERVERIP "192.168.82.96"
 #define SERVERPORT 9000
+
+HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
 
 void TimerFunc();
 void UpdateSendData();
@@ -546,6 +548,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 				CurrentGameState = static_cast<int>(EGameState::WAITING);
 				CreateThread(NULL, 0, ClientMain, NULL, 0, NULL);
 				glutTimerFunc(50, Timerfunction, 1);
+				hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 			}
 			break;
 		}
@@ -822,6 +825,8 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	int nServerDataLen = sizeof(SendGameData);
 	while (1)
 	{
+		DWORD retval = WaitForSingleObject(hFootholdEvent, 30);
+
 		// myPlayer 송신
 		//send(sock, (char*)&nClientDataLen, sizeof(int), 0);
 		send(sock, (char*)&myPlayer, nClientDataLen, 0);
