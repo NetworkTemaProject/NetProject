@@ -809,11 +809,11 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		CurrentGameState = static_cast<int>(EGameState::PLAYING);
 	}
 
-	while (1)
-	{
-		recvn(sock, (char*)&CurrentTime, sizeof(int), 0);
-		cout << CurrentTime << endl;
-	}
+	////while (1)
+	////{
+	////	recvn(sock, (char*)&CurrentTime, sizeof(int), 0);
+	////	cout << CurrentTime << endl;
+	////}
 
 	int len = 0;
 	char buf[BUFSIZE];

@@ -10,7 +10,7 @@
 
 #define SERVERPORT 9000
 //#define SERVERIP "192.168.82.96"
-#define SERVERIP "127.0.0.1"
+//#define SERVERIP "127.0.0.1"
 
 volatile int custom_counter = 0;
 
@@ -175,25 +175,27 @@ int main(int argc, char* argv[])
 
 		// 신호 상태
 		hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
-		if (hFootholdEvent == NULL)
-			return 1;
+		if (hFootholdEvent == NULL) return 1;
 	}
-
 
 
 	custom_counter = CLIENT_NUM;
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
 		hClientThread[i] = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
-		/*if (hClientThread != NULL) CloseHandle(hClientThread);
-		else closesocket(client_socks[i]);*/
+		if(hClientThread[i] == NULL ) closesocket(client_socks[i]);
 	}
 
-	hTimeThread = CreateThread(NULL, 0, ProcessTime, (LPVOID)client_socks, 0, NULL);
+	while (1)
+	{
+		cout << "test";
+	}
+	//hTimeThread = CreateThread(NULL, 0, ProcessTime, (LPVOID)client_socks, 0, NULL);
 
-	WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
-	if (hTimeThread != NULL)
-		WaitForSingleObject(hTimeThread, INFINITE);
+	//WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
+	
+	//if (hTimeThread != NULL)
+	//	WaitForSingleObject(hTimeThread, INFINITE);
 
 	// closesocket()
 	closesocket(listen_sock);
@@ -349,17 +351,16 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	int nServerDataLen = sizeof(SendGameData);
 	int nClientDataLen = sizeof(SendPlayerData);
 
-	int count = 0;
-	while (1)
-	{	
-		++count;
-	}
+	//int count = 0;
+	//while (1)
+	//{	
+	//	++count;
+	//}
 
 	while (1)
 	{
-		Sleep(40);
-		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
-		if (retval != WAIT_OBJECT_0) break;
+		DWORD retval = WaitForSingleObject(hFootholdEvent, 60);
+		//if (retval != WAIT_OBJECT_0) break;
 
 		DWORD threadId = GetCurrentThreadId();
 		CheckInsertPlayerMgrData(threadId);
@@ -383,7 +384,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
 		if (retval == SOCKET_ERROR) err_display("");
 
-		SetEvent(hFootholdEvent);
+		//SetEvent(hFootholdEvent);
 	}
 	return 0;
 }
