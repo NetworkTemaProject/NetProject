@@ -359,7 +359,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 	while (1)
 	{
-		DWORD retval = WaitForSingleObject(hFootholdEvent, 30);
+		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
 		//if (retval != WAIT_OBJECT_0) break;
 
 		DWORD threadId = GetCurrentThreadId();
@@ -384,7 +384,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
 		if (retval == SOCKET_ERROR) err_display("");
 
-		//SetEvent(hFootholdEvent);
+		SetEvent(hFootholdEvent);
 	}
 	return 0;
 }
