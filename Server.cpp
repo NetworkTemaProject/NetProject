@@ -61,6 +61,7 @@ DWORD WINAPI ProcessClient(LPVOID arg);
 DWORD WINAPI ProcessTime(LPVOID arg);
 
 void UpdatePlayerLocation(CPlayer* p, InputData input);
+void InitPlayerLocation(CPlayer* p, InputData input);
 void UpdateFootholdbyPlayer(CPlayer* player,vector<Foothold>& Bottom);
 void SettingPlayersMine(DWORD ThreadId);
 void CheckInsertPlayerMgrData(DWORD ThreadId);
@@ -293,20 +294,26 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer* player)
 
 void UpdatePlayerLocation(CPlayer* p, InputData input)
 {
-
-	if ((*p).dz) (*p).dz = 0.0f;
-	if ((*p).dx) (*p).dx = 0.0f;
-
 	if (input.bUp) (*p).dz = -0.1f;
 	if (input.bDown) (*p).dz = 0.1f;
 	if (input.bLeft) (*p).dx = -0.1f;
 	if (input.bRight) (*p).dx = 0.1f;
 	if (input.bSpace) (*p).Jump();
+}
 
-	// 업데이트 중인지 판단 -> dx dz로 판단
-	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
-	if ((*p).dz && !input.bUp && !input.bDown) (*p).dz = 0.0f;
-	if ((*p).dx && !input.bLeft && !input.bRight) (*p).dx = 0.0f;
+void InitPlayerLocation(CPlayer* p, InputData input)
+{
+	if ((*p).dz) (*p).dz = 0.0f;
+	if ((*p).dx) (*p).dx = 0.0f;
+
+	if (input.bUp) input.bUp = false;
+	if (input.bDown) input.bDown = false;
+	if (input.bLeft) input.bLeft = false;
+	if (input.bRight) input.bRight = false;
+	if (input.bSpace) input.bSpace = false;
+
+	//if ((*p).dz && !input.bUp && !input.bDown) (*p).dz = 0.0f;
+	//if ((*p).dx && !input.bLeft && !input.bRight) (*p).dx = 0.0f;
 }
 
 void FootHoldInit()
@@ -371,6 +378,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		SettingPlayersMine(threadId);
 		UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
 		(*ClientManager[threadId]).player.Update();
+		InitPlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
 		UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player,Bottom);
 		CheckCollideFoothold(Bottom);
 
