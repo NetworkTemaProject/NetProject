@@ -209,7 +209,7 @@ int otherIndex = -1;
 int showIndex = -1;
 bool bChangeCam = false;
 
-volatile int CurrentTime = 0; // 현재 남은 게임 시간
+volatile int CurrentTime = 120; // 현재 남은 게임 시간
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -502,8 +502,8 @@ void Print_GameState()
 		}
 		case static_cast<int>(EGameState::PLAYING):
 		{
-			char playing[8] = "Playing";
-			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, playing);
+			/*char playing[8] = "Playing";
+			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, playing);*/
 			char cTime[5];
 			_itoa(CurrentTime, cTime, 10);
 			renderBitmapCharacher(0.0f, 0.9f, 0, (void*)font, cTime);
@@ -809,12 +809,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		CurrentGameState = static_cast<int>(EGameState::PLAYING);
 	}
 
-	/*while (1)
-	{
-		recvn(sock, (char*)&CurrentTime, sizeof(int), 0);
-		cout << CurrentTime << endl;
-	}*/
-
 	int len = 0;
 	char buf[BUFSIZE];
 
@@ -827,7 +821,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 		if (opcode == 0)
 		{
-			cout << opcode << endl;
 			// myPlayer 송신
 			//send(sock, (char*)&nClientDataLen, sizeof(int), 0);
 			send(sock, (char*)&myPlayer, nClientDataLen, 0);
