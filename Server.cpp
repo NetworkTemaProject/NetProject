@@ -43,6 +43,8 @@ SendGameData ServerGameData;
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
 
+CRITICAL_SECTION cs;
+
 void ServerInit();
 BOOL IsOkGameStart(int PlayerCount);
 void RecTimer();
@@ -61,6 +63,7 @@ DWORD WINAPI ProcessClient(LPVOID arg);
 DWORD WINAPI ProcessTime(LPVOID arg);
 
 void UpdatePlayerLocation(CPlayer* p, InputData input);
+void InitPlayerLocation(CPlayer* p, InputData input);
 void UpdateFootholdbyPlayer(CPlayer* player,vector<Foothold>& Bottom);
 void SettingPlayersMine(DWORD ThreadId);
 void CheckInsertPlayerMgrData(DWORD ThreadId);
@@ -120,6 +123,8 @@ int recvn(SOCKET s, char* buf, int len, int flags)
 using namespace std;
 int main(int argc, char* argv[])
 {
+	InitializeCriticalSection(&cs);
+
 	ServerInit();
 
 	int retval;
@@ -186,16 +191,16 @@ int main(int argc, char* argv[])
 		if(hClientThread[i] == NULL ) closesocket(client_socks[i]);
 	}
 
-	while (1)
-	{
-		cout << "test";
-	}
+
 	//hTimeThread = CreateThread(NULL, 0, ProcessTime, (LPVOID)client_socks, 0, NULL);
 
-	//WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
-	
+	WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
+	//WaitForMultipleObjects(1, hClientThread, TRUE, INFINITE);
+
 	//if (hTimeThread != NULL)
 	//	WaitForSingleObject(hTimeThread, INFINITE);
+
+	DeleteCriticalSection(&cs);
 
 	// closesocket()
 	closesocket(listen_sock);
@@ -295,20 +300,26 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer* player)
 
 void UpdatePlayerLocation(CPlayer* p, InputData input)
 {
-
-	if ((*p).dz) (*p).dz = 0.0f;
-	if ((*p).dx) (*p).dx = 0.0f;
-
 	if (input.bUp) (*p).dz = -0.1f;
 	if (input.bDown) (*p).dz = 0.1f;
 	if (input.bLeft) (*p).dx = -0.1f;
 	if (input.bRight) (*p).dx = 0.1f;
 	if (input.bSpace) (*p).Jump();
+}
 
-	// 업데이트 중인지 판단 -> dx dz로 판단
-	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
-	if ((*p).dz && !input.bUp && !input.bDown) (*p).dz = 0.0f;
-	if ((*p).dx && !input.bLeft && !input.bRight) (*p).dx = 0.0f;
+void InitPlayerLocation(CPlayer* p, InputData input)
+{
+	if ((*p).dz) (*p).dz = 0.0f;
+	if ((*p).dx) (*p).dx = 0.0f;
+
+	if (input.bUp) input.bUp = false;
+	if (input.bDown) input.bDown = false;
+	if (input.bLeft) input.bLeft = false;
+	if (input.bRight) input.bRight = false;
+	if (input.bSpace) input.bSpace = false;
+
+	//if ((*p).dz && !input.bUp && !input.bDown) (*p).dz = 0.0f;
+	//if ((*p).dx && !input.bLeft && !input.bRight) (*p).dx = 0.0f;
 }
 
 void FootHoldInit()
@@ -343,8 +354,6 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
 
 	send(clientSock, (char*)&custom_counter, sizeof(int), 0);
-	// cout << custom_counter << endl;
-	// cout << inet_ntoa(clientAddr.sin_addr) << endl;
 
 	SendPlayerData ClientData;
 	//int nClientDataLen = 0;
@@ -359,10 +368,13 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 	while (1)
 	{
-		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
+		DWORD retval = WaitForSingleObject(hFootholdEvent, 25);
+		EnterCriticalSection(&cs);
 		//if (retval != WAIT_OBJECT_0) break;
 
 		DWORD threadId = GetCurrentThreadId();
+		//cout << threadId << " 시작 " << endl;
+
 		CheckInsertPlayerMgrData(threadId);
 
 		//recvn(clientSock, (char*)&nClientDataLen, sizeof(int), 0);       
@@ -372,19 +384,23 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		SettingPlayersMine(threadId);
 		UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
 		(*ClientManager[threadId]).player.Update();
+		InitPlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
 		UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player,Bottom);
 		CheckCollideFoothold(Bottom);
 
 		(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
-		CheckGameWin(threadId);
+		//CheckGameWin(threadId);
 
 		SetCilentData();
 
 		//send(clientSock, (char*)&nServerDataLen, sizeof(int), 0);
 		retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
 		if (retval == SOCKET_ERROR) err_display("");
+		//cout << threadId << " 끝 " << endl;
 
-		SetEvent(hFootholdEvent);
+		LeaveCriticalSection(&cs);
+		//SetEvent(hFootholdEvent);
+		ResetEvent(hFootholdEvent);
 	}
 	return 0;
 }
