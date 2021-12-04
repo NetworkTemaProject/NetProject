@@ -43,6 +43,8 @@ SendGameData ServerGameData;
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
 
+CRITICAL_SECTION cs;
+
 void ServerInit();
 BOOL IsOkGameStart(int PlayerCount);
 void RecTimer();
@@ -121,6 +123,8 @@ int recvn(SOCKET s, char* buf, int len, int flags)
 using namespace std;
 int main(int argc, char* argv[])
 {
+	InitializeCriticalSection(&cs);
+
 	ServerInit();
 
 	int retval;
@@ -195,6 +199,8 @@ int main(int argc, char* argv[])
 	WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
 	if (hTimeThread != NULL)
 		WaitForSingleObject(hTimeThread, INFINITE);
+
+	DeleteCriticalSection(&cs);
 
 	// closesocket()
 	closesocket(listen_sock);
@@ -362,9 +368,9 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 	while (1)
 	{
-		Sleep(40);
-		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
-		if (retval != WAIT_OBJECT_0) break;
+		EnterCriticalSection(&cs);
+		DWORD retval = WaitForSingleObject(hFootholdEvent, 60);
+		//if (retval != WAIT_OBJECT_0) break;
 
 		DWORD threadId = GetCurrentThreadId();
 		CheckInsertPlayerMgrData(threadId);
@@ -389,7 +395,9 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
 		if (retval == SOCKET_ERROR) err_display("");
 
-		SetEvent(hFootholdEvent);
+		LeaveCriticalSection(&cs);
+		//ResetEvent(hFootholdEvent);
+		//SetEvent(hFootholdEvent);
 	}
 	return 0;
 }

@@ -482,15 +482,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 			{
 				CurrentGameState = static_cast<int>(EGameState::WAITING);
 				CreateThread(NULL, 0, ClientMain, NULL, 0, NULL);
-				glutTimerFunc(50, Timerfunction, 1);
-			}
-			break;
-		}
-		case 'R':
-		{
-			if (CurrentGameState == static_cast<int>(EGameState::GAMEOVER))
-			{
-				Init_Game();
+				//hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 			}
 			break;
 		}
@@ -676,6 +668,8 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	int nServerDataLen = sizeof(SendGameData);
 	while (1)
 	{
+	//	DWORD retval = WaitForSingleObject(hFootholdEvent, 30);
+
 		// myPlayer 송신
 		//send(sock, (char*)&nClientDataLen, sizeof(int), 0);
 		send(sock, (char*)&myPlayer, nClientDataLen, 0);
