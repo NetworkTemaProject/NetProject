@@ -348,8 +348,6 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	getpeername(clientSock, (SOCKADDR*)&clientAddr, &addrlen);
 
 	send(clientSock, (char*)&custom_counter, sizeof(int), 0);
-	// cout << custom_counter << endl;
-	// cout << inet_ntoa(clientAddr.sin_addr) << endl;
 
 	SendPlayerData ClientData;
 	//int nClientDataLen = 0;
