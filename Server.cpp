@@ -408,7 +408,7 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 	
 	short opcode = 1;
 
-	while (1)
+	while (GameTime > 0)
 	{
 		WaitForSingleObject(hGameEvent, INFINITE);
 
