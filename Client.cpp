@@ -23,13 +23,7 @@ void make_fragmentShader();
 void renderBitmapCharacher(float, float, float, void*, char*);
 void Print_word(float, float, float, float, int, char*);
 void Print_GameState();	// 현재 게임 상태에 따라 화면에 Title String, Waiting String, over을 출력하는 함수 
-void check_Bonus();
 
-void check_collide();
-bool collide_box(Foothold, CPlayer&);
-void Time_score();
-
-void Init_Game();
 
 void err_quit(const char* msg); // 소켓 함수 오류 출력 후 종료
 void err_display(const char* msg); // 소켓 함수 오류 출력
@@ -63,8 +57,6 @@ char WaitString[13] = "Waiting. . .";
 clock_t past;
 clock_t present;
 clock_t start;
-// TODO: game_over 대신 CurrentGameState로 게임 상황 구분하도록 한 후, game_over 변수 삭제하기
-bool game_over = false; // 대기 화면인가? 게임중인가? 게임이 끝나는가?
 
 enum class EGameState
 {
@@ -195,9 +187,11 @@ SOCKADDR_IN serveraddr;
 SendGameData ServerDatas;
 
 #define SERVERIP "127.0.0.1"
-//#define SERVERIP "192.168.123.41"
+//#define SERVERIP "192.168.122.18"
 //#define SERVERIP "192.168.82.96"
 #define SERVERPORT 9000
+
+HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
 
 void TimerFunc();
 void UpdateSendData();
@@ -308,7 +302,6 @@ int main(int argc, char** argv)
 
 	init();
 
-	//Init_Game();
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
@@ -362,14 +355,6 @@ void Print_word(float word_x, float word_y, float x, float y, int num, char* wor
 	renderBitmapCharacher(word_x, word_y, 0, (void*)font, word);
 	sprintf(char_score, "%d", num);
 	renderBitmapCharacher(x, y, 0, (void*)font, char_score);
-}
-
-void Time_score()
-{
-	present = clock() / 1000;
-	if (present - past)
-		score += 1;
-	past = clock() / 1000;
 }
 
 float radius = 5, camX = 0, camY = 0, camZ = 0;
@@ -514,20 +499,6 @@ void Print_GameState()
 	}
 }
 
-void check_Bonus()
-{
-	if (cnt - p_cnt)
-		if (!(cnt % 10))
-			score += cnt * 5;
-
-	if (tine - p_time)
-		if (!(tine % 10))
-			score += tine;
-
-	p_cnt = cnt;
-	p_time = present - start;
-}
-
 GLvoid Reshape(int w, int h)
 {
 	g_window_w = w;
@@ -546,14 +517,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 				CurrentGameState = static_cast<int>(EGameState::WAITING);
 				CreateThread(NULL, 0, ClientMain, NULL, 0, NULL);
 				glutTimerFunc(50, Timerfunction, 1);
-			}
-			break;
-		}
-		case 'R':
-		{
-			if (CurrentGameState == static_cast<int>(EGameState::GAMEOVER))
-			{
-				Init_Game();
+				hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 			}
 			break;
 		}
@@ -667,89 +631,6 @@ GLvoid KeyboardUp(unsigned char key, int x, int y)
 	glutPostRedisplay();
 }
 
-void check_collide()
-{
-	player.fall = true;
-	for (size_t i = 0; i < Bottom.size(); ++i)
-	{
-		if (collide_box(Bottom[i], player))
-		{
-			player.fall = false;
-			player.dy = 0;
-			Bottom[i].startDel = true;
-			break;
-		}
-	}
-
-	for (size_t i = 0; i < Bottom.size(); ++i)
-	{
-		if (Bottom[i].Del)
-			Bottom.erase(Bottom.begin() + i);
-	}
-}
-
-bool collide_box(Foothold bottom, CPlayer& player)
-{
-	float b_maxX, b_minX, p_maxX, p_minX;
-	float b_maxY, b_minY, p_maxY, p_minY;
-	float b_maxZ, b_minZ, p_maxZ, p_minZ;
-	p_maxX = player.x + 0.15f; p_minX = player.x - 0.15f;
-	p_maxY = player.y + 0.1f; p_minY = player.y - 0.1f;
-	p_maxZ = player.z + 0.15f; p_minZ = player.z - 0.15f;
-
-	b_maxX = bottom.mx + 0.4f; b_minX = bottom.mx - 0.4f;
-	b_maxY = bottom.my + 0.35f; b_minY = bottom.my + 0.25f;
-	b_maxZ = bottom.mz + 0.4f; b_minZ = bottom.mz - 0.4f;
-
-	if (b_maxX < p_minX || b_minX > p_maxX)
-		return false;
-	if (b_maxZ < p_minZ || b_minZ > p_maxZ)
-		return false;
-	if (b_maxY < p_minY || b_minY > p_maxY)
-		return false;
-	player.y = bottom.my + 0.3f;
-	return true;
-}
-
-void Init_Game()
-{
-	game_over = false;
-	score = 0;
-	start = clock() / 1000;
-	present = start;
-	past = start;
-
-	Bottom.clear();
-	MakeFoothold(Bottom);
-
-	for (int i = 0; i < 5; ++i)
-	{
-		Bottom[rand() % 25].Del = true;
-		Bottom[rand() % 25 + 25].Del = true;
-		Bottom[rand() % 25 + 50].Del = true;
-		Bottom[rand() % 25 + 75].Del = true;
-		Bottom[rand() % 25 + 100].Del = true;
-	}
-	for (int i = Bottom.size() - 1; i >= 0; --i)
-	{
-		if (Bottom[i].Del)
-		{
-			Bottom.erase(Bottom.begin() + i);
-		}
-	}
-
-	player.x = 0;
-	player.y = 5;
-	player.z = 0;
-	player.dx = 0;
-	player.dy = 0;
-	player.dz = 0;
-	player.fall = true;
-	player.Locate();
-
-	glutTimerFunc(50, Timerfunction, 1);
-}
-
 void err_quit(const char* msg)
 {
 	LPVOID lpMsgBuf;
@@ -821,10 +702,12 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 		if (opcode == 0)
 		{
+
+			//DWORD retval = WaitForSingleObject(hFootholdEvent, 100);
+
 			// myPlayer 송신
 			//send(sock, (char*)&nClientDataLen, sizeof(int), 0);
 			send(sock, (char*)&myPlayer, nClientDataLen, 0);
-
 			// ServerGameData 수신
 			//recvn(sock, (char*)&len, sizeof(int), 0);
 			recvn(sock, (char*)&ServerDatas, nServerDataLen, 0);
@@ -856,11 +739,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-
-void TimerFunc()
-{
-
-}
 
 void UpdateSendData()
 {

@@ -10,7 +10,7 @@
 
 #define SERVERPORT 9000
 //#define SERVERIP "192.168.82.96"
-#define SERVERIP "127.0.0.1"
+//#define SERVERIP "127.0.0.1"
 
 volatile int custom_counter = 0;
 
@@ -44,6 +44,8 @@ HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
 HANDLE hGameEvent, hTimeEvent;	// 소켓 동기화 작업을 위한 이벤트 핸들 변수
 
+CRITICAL_SECTION cs;
+
 void ServerInit();
 BOOL IsOkGameStart(int PlayerCount);
 void RecTimer();
@@ -62,6 +64,7 @@ DWORD WINAPI ProcessClient(LPVOID arg);
 DWORD WINAPI ProcessTime(LPVOID arg);
 
 void UpdatePlayerLocation(CPlayer* p, InputData input);
+void InitPlayerLocation(CPlayer* p, InputData input);
 void UpdateFootholdbyPlayer(CPlayer* player,vector<Foothold>& Bottom);
 void SettingPlayersMine(DWORD ThreadId);
 void CheckInsertPlayerMgrData(DWORD ThreadId);
@@ -121,6 +124,8 @@ int recvn(SOCKET s, char* buf, int len, int flags)
 using namespace std;
 int main(int argc, char* argv[])
 {
+	InitializeCriticalSection(&cs);
+
 	ServerInit();
 
 	hGameEvent = CreateEvent(NULL, FALSE, TRUE, NULL);	// TRUE: 게임 정보 보내기 완료
@@ -183,7 +188,7 @@ int main(int argc, char* argv[])
 
 		// 신호 상태
 		hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
-		if (hFootholdEvent == NULL)
+		if (hFootholdEvent == NULL) 
 			return 1;
 	}
 
@@ -195,14 +200,17 @@ int main(int argc, char* argv[])
 			closesocket(client_socks[i]);
 	}
 
+
 	hTimeThread = CreateThread(NULL, 0, ProcessTime, (LPVOID)client_socks, 0, NULL);
 
 	WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
 	if (hTimeThread != NULL)
 		WaitForSingleObject(hTimeThread, INFINITE);
-	
+
 	CloseHandle(hGameEvent);
 	CloseHandle(hTimeEvent);
+	
+	DeleteCriticalSection(&cs);
 
 	// closesocket()
 	closesocket(listen_sock);
@@ -302,20 +310,26 @@ bool IsCollideFootholdByPlayer(Foothold foot, CPlayer* player)
 
 void UpdatePlayerLocation(CPlayer* p, InputData input)
 {
-
-	if ((*p).dz) (*p).dz = 0.0f;
-	if ((*p).dx) (*p).dx = 0.0f;
-
 	if (input.bUp) (*p).dz = -0.1f;
 	if (input.bDown) (*p).dz = 0.1f;
 	if (input.bLeft) (*p).dx = -0.1f;
 	if (input.bRight) (*p).dx = 0.1f;
 	if (input.bSpace) (*p).Jump();
+}
 
-	// 업데이트 중인지 판단 -> dx dz로 판단
-	// 현재 키 입력 전부 안된상태 -> 0으로 초기화 (업데이트 중지)
-	if ((*p).dz && !input.bUp && !input.bDown) (*p).dz = 0.0f;
-	if ((*p).dx && !input.bLeft && !input.bRight) (*p).dx = 0.0f;
+void InitPlayerLocation(CPlayer* p, InputData input)
+{
+	if ((*p).dz) (*p).dz = 0.0f;
+	if ((*p).dx) (*p).dx = 0.0f;
+
+	if (input.bUp) input.bUp = false;
+	if (input.bDown) input.bDown = false;
+	if (input.bLeft) input.bLeft = false;
+	if (input.bRight) input.bRight = false;
+	if (input.bSpace) input.bSpace = false;
+
+	//if ((*p).dz && !input.bUp && !input.bDown) (*p).dz = 0.0f;
+	//if ((*p).dx && !input.bLeft && !input.bRight) (*p).dx = 0.0f;
 }
 
 void FootHoldInit()
@@ -357,16 +371,22 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	int nClientDataLen = sizeof(SendPlayerData);
 	short opcode = 0;
 
+	/*int count = 0;
+	while (1)
+	{	
+		++count;
+	}*/
+
 	while (1)
 	{
-		Sleep(40);
-		WaitForSingleObject(hTimeEvent, INFINITE);
+		DWORD retval = WaitForSingleObject(hFootholdEvent, 25);
+		EnterCriticalSection(&cs);
 
-		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
-		if (retval != WAIT_OBJECT_0) 
-			break;
+		// if (retval != WAIT_OBJECT_0) break;
 
 		DWORD threadId = GetCurrentThreadId();
+		//cout << threadId << " 시작 " << endl;
+
 		CheckInsertPlayerMgrData(threadId);
 
 		send(clientSock, (char*)&opcode, sizeof(short), 0);
@@ -379,11 +399,12 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		SettingPlayersMine(threadId);
 		UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
 		(*ClientManager[threadId]).player.Update();
+		InitPlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
 		UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player,Bottom);
 		CheckCollideFoothold(Bottom);
 
 		(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
-		CheckGameWin(threadId);
+		//CheckGameWin(threadId);
 
 		SetCilentData();
 
@@ -392,7 +413,10 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		if (retval == SOCKET_ERROR) 
 			err_display("");
 
-		SetEvent(hFootholdEvent);
+		LeaveCriticalSection(&cs);
+
+		//SetEvent(hFootholdEvent);
+		ResetEvent(hFootholdEvent);
 		SetEvent(hGameEvent);
 	}
 	return 0;
