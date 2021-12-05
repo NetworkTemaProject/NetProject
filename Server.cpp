@@ -10,7 +10,7 @@
 
 #define SERVERPORT 9000
 //#define SERVERIP "192.168.82.96"
-#define SERVERIP "127.0.0.1"
+//#define SERVERIP "127.0.0.1"
 
 volatile int custom_counter = 0;
 
@@ -42,6 +42,9 @@ SendGameData ServerGameData;
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
+HANDLE hGameEvent, hTimeEvent;	// 소켓 동기화 작업을 위한 이벤트 핸들 변수
+
+CRITICAL_SECTION cs;
 
 CRITICAL_SECTION cs;
 
@@ -127,6 +130,13 @@ int main(int argc, char* argv[])
 
 	ServerInit();
 
+	hGameEvent = CreateEvent(NULL, FALSE, TRUE, NULL);	// TRUE: 게임 정보 보내기 완료
+	if (hGameEvent == NULL)
+		return 1;
+	hTimeEvent = CreateEvent(NULL, FALSE, FALSE, NULL); // TRUE: 시간 정보 보내기 완료
+	if (hTimeEvent == NULL)
+		return 1;
+
 	int retval;
 
 	// 윈속 초기화
@@ -180,19 +190,18 @@ int main(int argc, char* argv[])
 
 		// 신호 상태
 		hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
-		if (hFootholdEvent == NULL)
+		if (hFootholdEvent == NULL) 
 			return 1;
 	}
-
-
 
 	custom_counter = CLIENT_NUM;
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
 		hClientThread[i] = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
-		/*if (hClientThread != NULL) CloseHandle(hClientThread);
-		else closesocket(client_socks[i]);*/
+		if (hClientThread[i] == NULL)
+			closesocket(client_socks[i]);
 	}
+
 
 	hTimeThread = CreateThread(NULL, 0, ProcessTime, (LPVOID)client_socks, 0, NULL);
 
@@ -200,6 +209,9 @@ int main(int argc, char* argv[])
 	if (hTimeThread != NULL)
 		WaitForSingleObject(hTimeThread, INFINITE);
 
+	CloseHandle(hGameEvent);
+	CloseHandle(hTimeEvent);
+	
 	DeleteCriticalSection(&cs);
 
 	// closesocket()
@@ -317,9 +329,6 @@ void InitPlayerLocation(CPlayer* p, InputData input)
 	if (input.bLeft) input.bLeft = false;
 	if (input.bRight) input.bRight = false;
 	if (input.bSpace) input.bSpace = false;
-
-	//if ((*p).dz && !input.bUp && !input.bDown) (*p).dz = 0.0f;
-	//if ((*p).dx && !input.bLeft && !input.bRight) (*p).dx = 0.0f;
 }
 
 void FootHoldInit()
@@ -359,25 +368,25 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	//int nClientDataLen = 0;
 	int nServerDataLen = sizeof(SendGameData);
 	int nClientDataLen = sizeof(SendPlayerData);
-
-	int count = 0;
-	while (1)
-	{	
-		++count;
-	}
+	short opcode = 0;
 
 	while (1)
 	{
+		WaitForSingleObject(hTimeEvent, INFINITE);
+		DWORD retval = WaitForSingleObject(hFootholdEvent, 50);
 		EnterCriticalSection(&cs);
-		DWORD retval = WaitForSingleObject(hFootholdEvent, 60);
-		//if (retval != WAIT_OBJECT_0) break;
 
 		DWORD threadId = GetCurrentThreadId();
+		//cout << threadId << " 시작 " << endl;
+
 		CheckInsertPlayerMgrData(threadId);
+
+		send(clientSock, (char*)&opcode, sizeof(short), 0);
 
 		//recvn(clientSock, (char*)&nClientDataLen, sizeof(int), 0);       
 		retval = recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
-		if (retval == SOCKET_ERROR) err_display("");
+		if (retval == SOCKET_ERROR) 
+			err_display("");
 
 		SettingPlayersMine(threadId);
 		UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
@@ -387,17 +396,19 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		CheckCollideFoothold(Bottom);
 
 		(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
-		CheckGameWin(threadId);
+		//CheckGameWin(threadId);
 
 		SetCilentData();
 
 		//send(clientSock, (char*)&nServerDataLen, sizeof(int), 0);
 		retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
-		if (retval == SOCKET_ERROR) err_display("");
+		if (retval == SOCKET_ERROR) 
+			err_display("");
 
 		LeaveCriticalSection(&cs);
-		//ResetEvent(hFootholdEvent);
+
 		//SetEvent(hFootholdEvent);
+		ResetEvent(hFootholdEvent);
 	}
 	return 0;
 }
@@ -406,18 +417,32 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 {
 	SOCKET* socks = (SOCKET*)arg;
 	SOCKET clientSocks[2] = { socks[0], socks[1] };
+	
+	int GameTime = 120;
+	clock_t CurrentTime = clock();
+	
+	short opcode = 1;
 
-	clock_t StartTime = clock();
-
-	while (1)
+	while (GameTime > 0)
 	{
-		int CurrentTime = 120 - ((clock() - StartTime) / CLOCKS_PER_SEC);	
-		for (int i = 0; i < CLIENT_NUM; ++i)
+		WaitForSingleObject(hGameEvent, INFINITE);
+
+		clock_t newTime = clock();
+		if ((newTime - CurrentTime) > CLOCKS_PER_SEC)
 		{
-			send(clientSocks[i], (char*)&CurrentTime, sizeof(int), 0);
+			
+			--GameTime;
+			for (int i = 0; i < CLIENT_NUM; ++i)
+			{
+				send(clientSocks[i], (char*)&opcode, sizeof(short), 0);
+				send(clientSocks[i], (char*)&GameTime, sizeof(int), 0);
+			}
+			CurrentTime = newTime;
+			cout << GameTime << endl;
+			
 		}
-		cout << CurrentTime << endl;
-		Sleep(1000);
+
+		SetEvent(hTimeEvent);
 	}
 
 	return 0;
