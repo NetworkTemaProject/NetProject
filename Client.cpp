@@ -522,10 +522,12 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 			break;
 		}
 		case 'Q':
+		case 'q':
 		{
 			exit(0);
 			break;
 		}
+		case 'W':
 		case 'w':
 		{
 			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
@@ -534,6 +536,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 			}
 			break;
 		}
+		case 'A':
 		case 'a':
 		{
 			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
@@ -542,6 +545,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 			}
 			break;
 		}
+		case 'S':
 		case 's':
 		{
 			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
@@ -550,6 +554,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 			}
 			break;
 		}
+		case 'D':
 		case 'd':
 		{
 			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
@@ -582,8 +587,8 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 			}
 			break;
 		}
-		case 'v':
 		case 'V':
+		case 'v':
 			if (IsChangeCamera() || bChangeCam) bChangeCam != bChangeCam;
 			break;
 	}
