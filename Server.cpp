@@ -34,6 +34,7 @@ bool isPlayingGame;
 int portnum;
 
 bool Win;
+int GameTime;
 
 vector<Foothold> Bottom;
 map<DWORD, PlayerMgr*> ClientManager;
@@ -43,8 +44,6 @@ SendGameData ServerGameData;
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
 HANDLE hGameEvent, hTimeEvent;	// 소켓 동기화 작업을 위한 이벤트 핸들 변수
-
-CRITICAL_SECTION cs;
 
 CRITICAL_SECTION cs;
 
@@ -409,6 +408,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 		//SetEvent(hFootholdEvent);
 		ResetEvent(hFootholdEvent);
+		SetEvent(hGameEvent);
 	}
 	return 0;
 }
@@ -418,7 +418,7 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 	SOCKET* socks = (SOCKET*)arg;
 	SOCKET clientSocks[2] = { socks[0], socks[1] };
 	
-	int GameTime = 120;
+	GameTime = 120;
 	clock_t CurrentTime = clock();
 	
 	short opcode = 1;
@@ -438,7 +438,6 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 				send(clientSocks[i], (char*)&GameTime, sizeof(int), 0);
 			}
 			CurrentTime = newTime;
-			cout << GameTime << endl;
 			
 		}
 
@@ -483,21 +482,15 @@ void CheckInsertPlayerMgrData(DWORD ThreadId)
 	}
 }
 
-// 시간이 초과되거나 플레이어가 추락했을 경우를 검사
 bool IsGameOver(CPlayer* player)
 {
 	if ((*player).y < UNDER) return true;
-	// 시간 끝났을때 조건도 추가필요
+	if (GameTime <= 0) return true;
 	return false;
-}
-
-bool compare(PlayerMgr& p1, PlayerMgr& p2)
-{
-	return p1.player.m_nScore > p2.player.m_nScore;
 }
 
 void CheckGameWin(DWORD ThreadId)
 {
-	sort(ServerGameData.PMgrs, ServerGameData.PMgrs + CLIENT_NUM, compare);
-	(*ClientManager[ThreadId]).Win = (ThreadId == ServerGameData.PMgrs[0].threadId) ? true : false;
+	int i = (ServerGameData.PMgrs[0].player.m_nScore > ServerGameData.PMgrs[1].player.m_nScore) ? 0 : 1;
+	(*ClientManager[ThreadId]).Win = (ThreadId == ServerGameData.PMgrs[i].threadId) ? true : false;
 }

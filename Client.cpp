@@ -314,12 +314,10 @@ void Timerfunction(int value)
 	{
 		case static_cast<int>(EGameState::TITLE):
 		{
-			cout << TitleString << endl;
 			break;
 		}
 		case static_cast<int>(EGameState::WAITING):
 		{
-			cout << WaitString << endl;
 			break;
 		}
 		case static_cast<int>(EGameState::PLAYING):
@@ -707,10 +705,8 @@ DWORD WINAPI ClientMain(LPVOID arg)
 			//DWORD retval = WaitForSingleObject(hFootholdEvent, 100);
 
 			// myPlayer 송신
-			//send(sock, (char*)&nClientDataLen, sizeof(int), 0);
 			send(sock, (char*)&myPlayer, nClientDataLen, 0);
 			// ServerGameData 수신
-			//recvn(sock, (char*)&len, sizeof(int), 0);
 			recvn(sock, (char*)&ServerDatas, nServerDataLen, 0);
 
 			for (int i = 0; i < CLIENT_NUM; ++i)
@@ -722,7 +718,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		else if (opcode == 1)
 		{
 			recvn(sock, (char*)&CurrentTime, sizeof(int), 0);
-			cout << CurrentTime << endl;
 		}
 
 		if (IsGameOverState())
