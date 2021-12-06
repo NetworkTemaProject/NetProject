@@ -204,6 +204,8 @@ int showIndex = -1;
 bool bChangeCam = false;
 
 volatile int CurrentTime = 0; // 현재 남은 게임 시간
+bool check = false;
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -314,29 +316,13 @@ int main(int argc, char** argv)
 
 void Timerfunction(int value)
 {
-	switch (CurrentGameState)
+	if (!check && myIndex == 1)
 	{
-		case static_cast<int>(EGameState::TITLE):
-		{
-			cout << TitleString << endl;
-			break;
-		}
-		case static_cast<int>(EGameState::WAITING):
-		{
-			cout << WaitString << endl;
-			break;
-		}
-		case static_cast<int>(EGameState::PLAYING):
-		{
-			glutTimerFunc(50, Timerfunction, 1);
-			break;
-		}
-		case static_cast<int>(EGameState::GAMEOVER):
-		{
-			break;
-		}
-	}			
-	
+		check = true;
+		Sleep(50);
+	}
+
+	glutTimerFunc(10, Timerfunction, 1);
 	glutPostRedisplay();
 }
 
@@ -414,7 +400,7 @@ GLvoid drawScene()
 	glUniformMatrix4fv(projection, 1, GL_FALSE, &ptrans[0][0]);
 
 	glBindVertexArray(vao);
-	for (size_t i = 0; i < N*N*N; ++i)
+	for (size_t i = 0; i < N * N * N; ++i)
 	{
 		if (ServerDatas.Bottom[i].Del) continue;
 
@@ -454,8 +440,8 @@ GLvoid drawScene()
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 	}
 
-	if(myIndex != -1)
-		Print_word(0.5f, 0.8f, 0.7f, 0.8f, (ServerDatas.PMgr[myIndex]).player.m_nScore,word1);
+	if (myIndex != -1)
+		Print_word(0.5f, 0.8f, 0.7f, 0.8f, (ServerDatas.PMgr[myIndex]).player.m_nScore, word1);
 
 	// 시간 처리 후 ServerData의 시간으로 변경필요 (check_bonus 함수도)
 	Print_word(0.5f, 0.7f, 0.8f, 0.7f, tine, word2);
@@ -469,23 +455,23 @@ void Print_GameState()
 {
 	switch (CurrentGameState)
 	{
-		case static_cast<int>(EGameState::TITLE):
+		case static_cast<int>(EGameState::TITLE) :
 		{
 			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, TitleString);
 			break;
 		}
-		case static_cast<int>(EGameState::WAITING):
+		case static_cast<int>(EGameState::WAITING) :
 		{
 			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, WaitString);
 			break;
 		}
-		case static_cast<int>(EGameState::GAMEOVER):
+		case static_cast<int>(EGameState::GAMEOVER) :
 		{
-			if((ServerDatas.PMgr[myIndex]).Win) renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, win);
+			if ((ServerDatas.PMgr[myIndex]).Win) renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, win);
 			else renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, over);
 			break;
 		}
-		case static_cast<int>(EGameState::PLAYING):
+		case static_cast<int>(EGameState::PLAYING) :
 		{
 			char playing[8] = "Playing";
 			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, playing);
@@ -510,82 +496,82 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
-		case VK_RETURN:
+	case VK_RETURN:
+	{
+		if (CurrentGameState == static_cast<int>(EGameState::TITLE))
 		{
-			if (CurrentGameState == static_cast<int>(EGameState::TITLE))
-			{
-				CurrentGameState = static_cast<int>(EGameState::WAITING);
-				CreateThread(NULL, 0, ClientMain, NULL, 0, NULL);
-				glutTimerFunc(50, Timerfunction, 1);
-				hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
-			}
-			break;
+			CurrentGameState = static_cast<int>(EGameState::WAITING);
+			CreateThread(NULL, 0, ClientMain, NULL, 0, NULL);
+			glutTimerFunc(50, Timerfunction, 1);
+			hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 		}
-		case 'Q':
+		break;
+	}
+	case 'Q':
+	{
+		exit(0);
+		break;
+	}
+	case 'w':
+	{
+		if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
 		{
-			exit(0);
-			break;
+			myPlayer.Input.bUp = true;
 		}
-		case 'w':
+		break;
+	}
+	case 'a':
+	{
+		if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
 		{
-			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
-			{
-				myPlayer.Input.bUp = true;
-			}
-			break;
+			myPlayer.Input.bLeft = true;
 		}
-		case 'a':
+		break;
+	}
+	case 's':
+	{
+		if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
 		{
-			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
-			{
-				myPlayer.Input.bLeft = true;
-			}
-			break;
+			myPlayer.Input.bDown = true;
 		}
-		case 's':
+		break;
+	}
+	case 'd':
+	{
+		if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
 		{
-			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
-			{
-				myPlayer.Input.bDown = true;
-			}
-			break;
+			myPlayer.Input.bRight = true;
 		}
-		case 'd':
+		break;
+	}
+	case 32:
+	{
+		if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
 		{
-			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
-			{
-				myPlayer.Input.bRight = true;
-			}
-			break;
+			myPlayer.Input.bSpace = true;
 		}
-		case 32:
+		break;
+	}
+	case 'p':
+	{
+		if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
 		{
-			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
-			{
-				myPlayer.Input.bSpace = true;
-			}
-			break;
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
-		case 'p':
+		break;
+	}
+	case 'P':
+	{
+		if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
 		{
-			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
-			{
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			}
-			break;
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
-		case 'P':
-		{
-			if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
-			{
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			}
-			break;
-		}
-		case 'v':
-		case 'V':
-			if (IsChangeCamera()|| bChangeCam) bChangeCam != bChangeCam;
-			break; 
+		break;
+	}
+	case 'v':
+	case 'V':
+		if (IsChangeCamera() || bChangeCam) bChangeCam != bChangeCam;
+		break;
 	}
 
 	glutPostRedisplay();
@@ -597,35 +583,35 @@ GLvoid KeyboardUp(unsigned char key, int x, int y)
 	{
 		switch (key)
 		{
-			case 'W':
-			case 'w':
-			{
-				myPlayer.Input.bUp = false;
-				break;
-			}
-			case 'S':
-			case 's':
-			{
-				myPlayer.Input.bDown = false;
-				break;
-			}
-			case 'A':
-			case 'a':
-			{
-				myPlayer.Input.bLeft = false;
-				break;
-			}
-			case 'D':
-			case 'd':
-			{
-				myPlayer.Input.bRight = false;
-				break;
-			}
-			case 32:
-			{
-				myPlayer.Input.bSpace = false;
-				break;
-			}
+		case 'W':
+		case 'w':
+		{
+			myPlayer.Input.bUp = false;
+			break;
+		}
+		case 'S':
+		case 's':
+		{
+			myPlayer.Input.bDown = false;
+			break;
+		}
+		case 'A':
+		case 'a':
+		{
+			myPlayer.Input.bLeft = false;
+			break;
+		}
+		case 'D':
+		case 'd':
+		{
+			myPlayer.Input.bRight = false;
+			break;
+		}
+		case 32:
+		{
+			myPlayer.Input.bSpace = false;
+			break;
+		}
 		}
 	}
 	glutPostRedisplay();
@@ -701,9 +687,11 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 	int nClientDataLen = sizeof(SendPlayerData);
 	int nServerDataLen = sizeof(SendGameData);
+
 	while (1)
 	{
 		//DWORD retval = WaitForSingleObject(hFootholdEvent, 100);
+		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
 
 		// myPlayer 송신
 		//send(sock, (char*)&nClientDataLen, sizeof(int), 0);
@@ -718,8 +706,9 @@ DWORD WINAPI ClientMain(LPVOID arg)
 			else otherIndex = i;
 		}
 		if (IsGameOverState()) CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
-		//ResetEvent(hFootholdEvent);
 
+		SetEvent(hFootholdEvent);
+		//ResetEvent(hFootholdEvent);
 	}
 
 	// closesocket()

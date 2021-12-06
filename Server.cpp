@@ -368,7 +368,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 	while (1)
 	{
-		DWORD retval = WaitForSingleObject(hFootholdEvent, 25);
+		DWORD retval = WaitForSingleObject(hFootholdEvent, 50);
 		EnterCriticalSection(&cs);
 		//if (retval != WAIT_OBJECT_0) break;
 
