@@ -59,6 +59,7 @@ clock_t present;
 clock_t start;
 
 HANDLE hDrawEvent;
+CRITICAL_SECTION cs;
 
 enum class EGameState
 {
@@ -293,6 +294,7 @@ void InitShader()
 int main(int argc, char** argv)
 {
 	hDrawEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+	InitializeCriticalSection(&cs);
 	if (hDrawEvent == NULL)
 		return 1;
 
@@ -318,6 +320,7 @@ int main(int argc, char** argv)
 	glutKeyboardUpFunc(KeyboardUp);
 	glutMainLoop();
 
+	DeleteCriticalSection(&cs);
 	return 0;
 }
 
@@ -359,7 +362,7 @@ GLvoid drawScene()
 {
 	glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	EnterCriticalSection(&cs);
 	glUseProgram(s_program);
 
 	GLUquadricObj* armL, * armR;
@@ -456,6 +459,7 @@ GLvoid drawScene()
 	Print_GameState();
 
 	glutSwapBuffers();
+	LeaveCriticalSection(&cs);
 
 	SetEvent(hDrawEvent);
 }
@@ -700,6 +704,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	while (1)
 	{
 		WaitForSingleObject(hDrawEvent, INFINITE);
+		EnterCriticalSection(&cs);
 
 		//DWORD retval = WaitForSingleObject(hFootholdEvent, 100);
 		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
@@ -720,6 +725,8 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 		SetEvent(hFootholdEvent);
 		//ResetEvent(hFootholdEvent);
+
+		LeaveCriticalSection(&cs);
 	}
 
 	// closesocket()
