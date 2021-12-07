@@ -58,6 +58,8 @@ clock_t past;
 clock_t present;
 clock_t start;
 
+HANDLE hDrawEvent;
+
 enum class EGameState
 {
 	TITLE,
@@ -186,7 +188,8 @@ SOCKADDR_IN peeraddr;
 SOCKADDR_IN serveraddr;
 SendGameData ServerDatas;
 
-#define SERVERIP "127.0.0.1"
+//#define SERVERIP "127.0.0.1"
+#define SERVERIP "192.168.82.146"
 //#define SERVERIP "192.168.122.18"
 //#define SERVERIP "192.168.82.96"
 #define SERVERPORT 9000
@@ -289,6 +292,10 @@ void InitShader()
 
 int main(int argc, char** argv)
 {
+	hDrawEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+	if (hDrawEvent == NULL)
+		return 1;
+
 	srand((unsigned int)time(NULL));
 
 	glutInit(&argc, argv);
@@ -322,7 +329,7 @@ void Timerfunction(int value)
 		Sleep(50);
 	}
 
-	glutTimerFunc(10, Timerfunction, 1);
+	glutTimerFunc(50, Timerfunction, 1);
 	glutPostRedisplay();
 }
 
@@ -449,6 +456,8 @@ GLvoid drawScene()
 	Print_GameState();
 
 	glutSwapBuffers();
+
+	SetEvent(hDrawEvent);
 }
 
 void Print_GameState()
@@ -690,6 +699,8 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 	while (1)
 	{
+		WaitForSingleObject(hDrawEvent, INFINITE);
+
 		//DWORD retval = WaitForSingleObject(hFootholdEvent, 100);
 		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
 
