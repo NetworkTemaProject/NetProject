@@ -34,6 +34,8 @@ int portnum;
 
 bool Win;
 
+volatile int GameTime = 10;
+
 vector<Foothold> Bottom;
 map<DWORD, PlayerMgr*> ClientManager;
 
@@ -69,6 +71,8 @@ void SettingPlayersMine(DWORD ThreadId);
 void CheckInsertPlayerMgrData(DWORD ThreadId);
 
 bool IsGameOver(CPlayer* player);
+bool IsAllPlayerGameOver();
+
 void CheckGameWin(DWORD ThreadId);
 
 // 소켓 함수 오류 출력 후 종료
@@ -177,8 +181,6 @@ int main(int argc, char* argv[])
 		addrlen = sizeof(clientaddr);
 		client_socks[i] = accept(listen_sock, (SOCKADDR*)&clientaddr, &addrlen);
 
-		//int opt_val = TRUE;
-		//setsockopt(client_socks[i], IPPROTO_TCP, TCP_NODELAY, (const char*)&opt_val, sizeof(opt_val));
 		if (client_socks[i] == INVALID_SOCKET)
 		{
 			err_display("accept()");
@@ -406,6 +408,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		ResetEvent(hFootholdEvent);
 		SetEvent(hGameEvent);
 	}
+
 	return 0;
 }
 
@@ -414,19 +417,17 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 	SOCKET* socks = (SOCKET*)arg;
 	SOCKET clientSocks[2] = { socks[0], socks[1] };
 	
-	int GameTime = 60;
 	clock_t CurrentTime = clock();
 	
 	short opcode = 1;
 
-	while (GameTime > 0)
+	while (1)
 	{
 		WaitForSingleObject(hGameEvent, INFINITE);
 
 		clock_t newTime = clock();
-		if ((newTime - CurrentTime) > CLOCKS_PER_SEC)
+		if ((newTime - CurrentTime) > CLOCKS_PER_SEC && !IsAllPlayerGameOver())
 		{
-			
 			--GameTime;
 			for (int i = 0; i < CLIENT_NUM; ++i)
 			{
@@ -435,7 +436,6 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 			}
 			CurrentTime = newTime;
 			cout << GameTime << endl;
-			
 		}
 
 		SetEvent(hTimeEvent);
@@ -482,9 +482,29 @@ void CheckInsertPlayerMgrData(DWORD ThreadId)
 // 시간이 초과되거나 플레이어가 추락했을 경우를 검사
 bool IsGameOver(CPlayer* player)
 {
-	if ((*player).y < UNDER) return true;
-	// 시간 끝났을때 조건도 추가필요
+	if ((*player).y < UNDER) 
+		return true;
+
+	if (GameTime == 0)
+		return true;
+	
 	return false;
+}
+
+bool IsAllPlayerGameOver()
+{
+	map<DWORD, PlayerMgr*>::iterator iter = ClientManager.begin();
+	
+	if (iter != ClientManager.end())
+	{
+		for (iter; iter != ClientManager.end(); ++iter)
+		{
+			if (!iter->second->bGameOver)
+				return false;
+		}
+	}
+
+	return true;
 }
 
 bool compare(PlayerMgr& p1, PlayerMgr& p2)

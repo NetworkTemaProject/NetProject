@@ -310,7 +310,6 @@ int main(int argc, char** argv)
 
 	init();
 
-
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
@@ -451,9 +450,6 @@ GLvoid drawScene()
 	if (myIndex != -1)
 		Print_word(0.5f, 0.8f, 0.7f, 0.8f, (ServerDatas.PMgr[myIndex]).player.m_nScore, word1);
 
-	// 시간 처리 후 ServerData의 시간으로 변경필요 (check_bonus 함수도)
-	Print_word(0.5f, 0.7f, 0.8f, 0.7f, tine, word2);
-	//check_Bonus();
 	Print_GameState();
 
 	glutSwapBuffers();
@@ -595,41 +591,39 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 
 GLvoid KeyboardUp(unsigned char key, int x, int y)
 {
-	if (CurrentGameState == static_cast<int>(EGameState::PLAYING))
+	switch (key)
 	{
-		switch (key)
+		case 'W':
+		case 'w':
 		{
-			case 'W':
-			case 'w':
-			{
-				myPlayer.Input.bUp = false;
-				break;
-			}
-			case 'S':
-			case 's':
-			{
-				myPlayer.Input.bDown = false;
-				break;
-			}
-			case 'A':
-			case 'a':
-			{
-				myPlayer.Input.bLeft = false;
-				break;
-			}
-			case 'D':
-			case 'd':
-			{
-				myPlayer.Input.bRight = false;
-				break;
-			}
-			case 32:
-			{
-				myPlayer.Input.bSpace = false;
-				break;
-			}
+			myPlayer.Input.bUp = false;
+			break;
+		}
+		case 'S':
+		case 's':
+		{
+			myPlayer.Input.bDown = false;
+			break;
+		}
+		case 'A':
+		case 'a':
+		{
+			myPlayer.Input.bLeft = false;
+			break;
+		}
+		case 'D':
+		case 'd':
+		{
+			myPlayer.Input.bRight = false;
+			break;
+		}
+		case 32:
+		{
+			myPlayer.Input.bSpace = false;
+			break;
 		}
 	}
+
 	glutPostRedisplay();
 }
 
@@ -726,7 +720,15 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		}
 
 		if (IsGameOverState())
+		{
 			CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
+
+			myPlayer.Input.bUp = false;
+			myPlayer.Input.bDown = false;
+			myPlayer.Input.bLeft = false;
+			myPlayer.Input.bRight = false;
+			myPlayer.Input.bSpace = false;
+		}
 
 		SetEvent(hFootholdEvent);
 
@@ -740,8 +742,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	WSACleanup();
 	return 0;
 }
-
-//////////////////////////////////////////////////////////////////////////////////////////
 
 void UpdateSendData()
 {
