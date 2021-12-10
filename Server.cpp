@@ -388,16 +388,24 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 			err_display("");
 
 		SettingPlayersMine(threadId);
-		UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
-		(*ClientManager[threadId]).player.Update();
-		InitPlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
-		UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player,Bottom);
-		CheckCollideFoothold(Bottom);
+
+		if (!(*ClientManager[threadId]).bGameOver)
+		{
+			UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
+			(*ClientManager[threadId]).player.Update();
+			InitPlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
+			UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player, Bottom);
+			CheckCollideFoothold(Bottom);
+		}
 
 		(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
-		//CheckGameWin(threadId);
 
 		SetCilentData();
+
+		if (IsAllPlayerGameOver())
+		{
+			CheckGameWin(threadId);
+		}
 
 		retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
 		if (retval == SOCKET_ERROR) 
