@@ -190,9 +190,6 @@ SOCKADDR_IN serveraddr;
 SendGameData ServerDatas;
 
 #define SERVERIP "127.0.0.1"
-//#define SERVERIP "192.168.82.146"
-//#define SERVERIP "192.168.122.18"
-//#define SERVERIP "192.168.82.96"
 #define SERVERPORT 9000
 
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
@@ -207,7 +204,7 @@ int otherIndex = -1;
 int showIndex = -1;
 bool bChangeCam = false;
 
-volatile int CurrentTime = 120; // 현재 남은 게임 시간
+volatile int CurrentTime = 60; // 현재 남은 게임 시간
 bool check = false;
 
 
@@ -383,7 +380,6 @@ GLvoid drawScene()
 	unsigned int amlight = glGetUniformLocation(s_program, "ambientLight");
 	glUniform1f(amlight, aml);
 
-
 	unsigned int color_location = glGetUniformLocation(s_program, "objectColor");
 	unsigned int model = glGetUniformLocation(s_program, "model");
 
@@ -400,6 +396,7 @@ GLvoid drawScene()
 		vtrans = glm::lookAt(glm::vec3((ServerDatas.PMgr[showIndex]).player.x, (ServerDatas.PMgr[showIndex]).player.y + 2, (ServerDatas.PMgr[showIndex]).player.z + 2),
 			glm::vec3((ServerDatas.PMgr[showIndex]).player.x, (ServerDatas.PMgr[showIndex]).player.y, (ServerDatas.PMgr[showIndex]).player.z), glm::vec3(0.0f, 1.0f, 0.0f));
 	}
+
 	unsigned int view = glGetUniformLocation(s_program, "view");
 	glUniformMatrix4fv(view, 1, GL_FALSE, &vtrans[0][0]);
 
@@ -410,6 +407,7 @@ GLvoid drawScene()
 	glUniformMatrix4fv(projection, 1, GL_FALSE, &ptrans[0][0]);
 
 	glBindVertexArray(vao);
+
 	for (size_t i = 0; i < N * N * N; ++i)
 	{
 		if (ServerDatas.Bottom[i].Del) continue;
@@ -488,8 +486,6 @@ void Print_GameState()
 		}
 		case static_cast<int>(EGameState::PLAYING):
 		{
-			/*char playing[8] = "Playing";
-			renderBitmapCharacher(-0.2f, 0.0f, 0, (void*)font, playing);*/
 			char cTime[5];
 			_itoa(CurrentTime, cTime, 10);
 			renderBitmapCharacher(0.0f, 0.9f, 0, (void*)font, cTime);
@@ -696,9 +692,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		CurrentGameState = static_cast<int>(EGameState::PLAYING);
 	}
 
-	int len = 0;
-	char buf[BUFSIZE];
-
 	int nClientDataLen = sizeof(SendPlayerData);
 	int nServerDataLen = sizeof(SendGameData);
 
@@ -707,7 +700,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		WaitForSingleObject(hDrawEvent, INFINITE);
 		EnterCriticalSection(&cs);
 
-		//DWORD retval = WaitForSingleObject(hFootholdEvent, 100);
 		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
 
 		short opcode = 0;
@@ -715,13 +707,10 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 		if (opcode == 0)
 		{
-			//DWORD retval = WaitForSingleObject(hFootholdEvent, 100);
-
 			// myPlayer 송신
-			//send(sock, (char*)&nClientDataLen, sizeof(int), 0);
 			send(sock, (char*)&myPlayer, nClientDataLen, 0);
+
 			// ServerGameData 수신
-			//recvn(sock, (char*)&len, sizeof(int), 0);
 			recvn(sock, (char*)&ServerDatas, nServerDataLen, 0);
 
 			for (int i = 0; i < CLIENT_NUM; ++i)
@@ -740,10 +729,8 @@ DWORD WINAPI ClientMain(LPVOID arg)
 			CurrentGameState = static_cast<int>(EGameState::GAMEOVER);
 
 		SetEvent(hFootholdEvent);
-		//ResetEvent(hFootholdEvent);
 
 		LeaveCriticalSection(&cs);
-
 	}
 
 	// closesocket()

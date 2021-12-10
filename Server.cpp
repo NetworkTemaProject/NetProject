@@ -9,7 +9,6 @@
 #include "Foothold.h"
 
 #define SERVERPORT 9000
-//#define SERVERIP "192.168.82.96"
 //#define SERVERIP "127.0.0.1"
 
 volatile int custom_counter = 0;
@@ -343,7 +342,7 @@ void PlayerInit()
 {
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
-		ServerGameData.PMgrs[i].player.x = 0;	// 좌표 값 어떻게 설정할 것인지(랜덤 or 지정) 나중에 상의!
+		ServerGameData.PMgrs[i].player.x = 0;
 		ServerGameData.PMgrs[i].player.y = 5;
 		ServerGameData.PMgrs[i].player.z = 0;
 		ServerGameData.PMgrs[i].player.dx = 0;
@@ -366,16 +365,9 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	send(clientSock, (char*)&custom_counter, sizeof(int), 0);
 
 	SendPlayerData ClientData;
-	//int nClientDataLen = 0;
 	int nServerDataLen = sizeof(SendGameData);
 	int nClientDataLen = sizeof(SendPlayerData);
 	short opcode = 0;
-
-	/*int count = 0;
-	while (1)
-	{	
-		++count;
-	}*/
 
 	while (1)
 	{
@@ -383,16 +375,12 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		DWORD retval = WaitForSingleObject(hFootholdEvent, 25);
 		EnterCriticalSection(&cs);
 
-		// if (retval != WAIT_OBJECT_0) break;
-
 		DWORD threadId = GetCurrentThreadId();
-		//cout << threadId << " 시작 " << endl;
 
 		CheckInsertPlayerMgrData(threadId);
 
 		send(clientSock, (char*)&opcode, sizeof(short), 0);
-
-		//recvn(clientSock, (char*)&nClientDataLen, sizeof(int), 0);       
+     
 		retval = recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
 		if (retval == SOCKET_ERROR) 
 			err_display("");
@@ -409,14 +397,12 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 		SetCilentData();
 
-		//send(clientSock, (char*)&nServerDataLen, sizeof(int), 0);
 		retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
 		if (retval == SOCKET_ERROR) 
 			err_display("");
 
 		LeaveCriticalSection(&cs);
 
-		//SetEvent(hFootholdEvent);
 		ResetEvent(hFootholdEvent);
 		SetEvent(hGameEvent);
 	}
@@ -428,7 +414,7 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 	SOCKET* socks = (SOCKET*)arg;
 	SOCKET clientSocks[2] = { socks[0], socks[1] };
 	
-	int GameTime = 120;
+	int GameTime = 60;
 	clock_t CurrentTime = clock();
 	
 	short opcode = 1;
