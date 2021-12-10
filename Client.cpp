@@ -189,8 +189,8 @@ SOCKADDR_IN peeraddr;
 SOCKADDR_IN serveraddr;
 SendGameData ServerDatas;
 
-//#define SERVERIP "127.0.0.1"
-#define SERVERIP "192.168.82.146"
+#define SERVERIP "127.0.0.1"
+//#define SERVERIP "192.168.82.146"
 //#define SERVERIP "192.168.122.18"
 //#define SERVERIP "192.168.82.96"
 #define SERVERPORT 9000
