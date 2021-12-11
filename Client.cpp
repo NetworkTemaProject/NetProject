@@ -189,8 +189,10 @@ SOCKADDR_IN peeraddr;
 SOCKADDR_IN serveraddr;
 SendGameData ServerDatas;
 
-#define SERVERIP "127.0.0.1"
+//#define SERVERIP "127.0.0.1"
 #define SERVERPORT 9000
+
+std::string ServerIP;
 
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
 
@@ -281,7 +283,6 @@ void InitShader()
 	glAttachShader(s_program, vertexshader);
 	glAttachShader(s_program, fragmentshader);
 	glLinkProgram(s_program);
-	checkCompileErrors(s_program, "PROGRAM");
 	glDeleteShader(vertexshader);
 	glDeleteShader(fragmentshader);
 
@@ -290,6 +291,9 @@ void InitShader()
 
 int main(int argc, char** argv)
 {
+	cout << "IP주소 입력: ";
+	cin >> ServerIP;
+
 	hDrawEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 	InitializeCriticalSection(&cs);
 	if (hDrawEvent == NULL)
@@ -669,7 +673,8 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	SOCKADDR_IN serveraddr;
 	ZeroMemory(&serveraddr, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
-	serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
+	serveraddr.sin_addr.s_addr = inet_addr(ServerIP.c_str());
+	//serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
 
 	if (CurrentGameState == static_cast<int>(EGameState::WAITING))

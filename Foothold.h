@@ -53,7 +53,7 @@ public:
 			if (my < 0)
 				// 층 낮아질수록 score 값 증가
 				score = int(10 * -my);
-			else
+			else 
 				score = int(10 * my);
 	}
 

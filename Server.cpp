@@ -9,6 +9,7 @@
 #include "Foothold.h"
 
 #define SERVERPORT 9000
+std::string ServerIP;
 //#define SERVERIP "127.0.0.1"
 
 volatile int custom_counter = 0;
@@ -34,7 +35,7 @@ int portnum;
 
 bool Win;
 
-volatile int GameTime = 10;
+volatile int GameTime = 60;
 
 vector<Foothold> Bottom;
 map<DWORD, PlayerMgr*> ClientManager;
@@ -127,6 +128,9 @@ int recvn(SOCKET s, char* buf, int len, int flags)
 using namespace std;
 int main(int argc, char* argv[])
 {
+	cout << "IP주소 입력: ";
+	cin >> ServerIP;
+
 	InitializeCriticalSection(&cs);
 
 	ServerInit();
@@ -154,8 +158,8 @@ int main(int argc, char* argv[])
 	SOCKADDR_IN serveraddr;
 	ZeroMemory(&serveraddr, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
-	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	//serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
+	// serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	serveraddr.sin_addr.s_addr = inet_addr(ServerIP.c_str());
 	serveraddr.sin_port = htons(SERVERPORT);
 	retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
 	if (retval == SOCKET_ERROR)

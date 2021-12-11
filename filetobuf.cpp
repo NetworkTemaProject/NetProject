@@ -29,12 +29,15 @@ char* filetobuf(const char* file)
 BOOL checkCompileErrors(GLuint uin, const char* errorword)
 {
 	GLint result;
-	GLchar errorLog[512];
 	glGetShaderiv(uin, GL_COMPILE_STATUS, &result);
-	if (!result)
+
+	if (result != GL_TRUE)
 	{
-		glGetShaderInfoLog(uin, 512, NULL, errorLog);
-		cerr << "ERROR: 컴파일 실패\n" << errorLog << errorword << endl;
+		GLsizei log_length = 0;
+		GLchar message[1024];
+		glGetShaderInfoLog(uin, 1024, &log_length, message);
 		return false;
 	}
+
+	return true;
 }
