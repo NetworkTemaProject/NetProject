@@ -18,9 +18,9 @@ clock_t serverInit_time;
 clock_t serverPre_time;
 clock_t serverDelta_time;
 
-struct SendGameData{
+struct SendGameData
+{
 	PlayerMgr PMgrs[CLIENT_NUM];
-	clock_t ServerTime;
 	Foothold Bottom[N * N * N];
 };
 
@@ -526,6 +526,11 @@ bool compare(PlayerMgr& p1, PlayerMgr& p2)
 
 void CheckGameWin(DWORD ThreadId)
 {
-	sort(ServerGameData.PMgrs, ServerGameData.PMgrs + CLIENT_NUM, compare);
-	(*ClientManager[ThreadId]).Win = (ThreadId == ServerGameData.PMgrs[0].threadId) ? true : false;
+	SendGameData* tempData = new SendGameData;
+	memcpy(tempData, &ServerGameData, sizeof(SendGameData));
+
+	sort(tempData->PMgrs, tempData->PMgrs + CLIENT_NUM, compare);
+	(*ClientManager[ThreadId]).Win = (ThreadId == tempData->PMgrs[0].threadId) ? true : false;
+
+	delete tempData;
 }

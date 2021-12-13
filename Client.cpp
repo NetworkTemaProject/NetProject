@@ -178,7 +178,6 @@ CPlayer player;
 struct SendGameData
 {
 	PlayerMgr PMgr[CLIENT_NUM];
-	clock_t ServerTime;
 	Foothold Bottom[N * N * N];
 };
 
@@ -254,7 +253,7 @@ void make_fragmentShader()
 	fragmentshader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentshader, 1, (const GLchar**)&fragmentsource, 0);
 	glCompileShader(fragmentshader);
-	checkCompileErrors(fragmentshader, "fragment shader");
+	checkCompileErrors(fragmentshader, "fragment shader"); 
 }
 
 void InitBuffer()
