@@ -14,8 +14,7 @@ GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
 GLvoid Keyboard(unsigned char key, int x, int y);
 GLvoid KeyboardUp(unsigned char key, int x, int y);
-//void Mouse(int button, int state, int x, int y);
-//void MouseMove(GLint x, GLint y);
+
 void Timerfunction(int value);
 void make_vertexShader();
 void make_fragmentShader();
@@ -187,7 +186,6 @@ struct SendGameData
 SendPlayerData myPlayer;
 PlayerMgr players[CLIENT_NUM];
 
-SOCKADDR_IN peeraddr;
 SOCKADDR_IN serveraddr;
 SendGameData ServerDatas;
 
@@ -197,8 +195,6 @@ std::string ServerIP;
 
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
 
-void UpdateSendData();
-bool IsPlayingGame();
 bool IsGameOverState();
 bool IsChangeCamera();
 int myIndex = -1;
@@ -608,7 +604,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		}
 		case 'v':
 		case 'V':
-			if (IsChangeCamera() || bChangeCam) bChangeCam != bChangeCam;
+			if (IsChangeCamera() || bChangeCam) bChangeCam = !bChangeCam;
 			break;
 	}
 
@@ -690,6 +686,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock == INVALID_SOCKET)
 		err_quit("socket()");
+
 
 	// connect()
 	SOCKADDR_IN serveraddr;
@@ -776,16 +773,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	}
 
 	return 0;
-}
-
-void UpdateSendData()
-{
-
-}
-
-bool IsPlayingGame()
-{
-	return false;
 }
 
 bool IsGameOverState()

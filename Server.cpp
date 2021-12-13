@@ -13,28 +13,15 @@ std::string ServerIP;
 
 volatile int custom_counter = 0;
 
-clock_t serverInit_time;
-clock_t serverPre_time;
-clock_t serverDelta_time;
-
 struct SendGameData
 {
 	PlayerMgr PMgrs[CLIENT_NUM];
 	Foothold Bottom[N * N * N];
 };
 
-bool IsCollisionPandF;
-bool IsCollisionP1andP2;
-
-bool IsNeedUpdateLoc;
-
-bool isPlayingGame;
-
-int portnum;
-
 bool Win;
 
-volatile int GameTime = 10;
+volatile int GameTime = 60;
 
 vector<Foothold> Bottom;
 map<DWORD, PlayerMgr*> ClientManager;
@@ -47,17 +34,11 @@ HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변�
 CRITICAL_SECTION cs;
 
 void ServerInit();
-BOOL IsOkGameStart(int PlayerCount);
-void RecTimer();
-void UpdateTimer();
-float timeInterpolation();
-void CreateMainGameScene();
 void CheckCollideFoothold(vector<Foothold>& Bottom);
 
 bool IsCollideFootholdByPlayer(Foothold foot, CPlayer* player);
 
-void InitServerSendData();
-void SetCilentData();
+void SetClientData();
 void FootHoldInit();
 void PlayerInit();
 DWORD WINAPI ProcessClient(LPVOID arg);
@@ -222,31 +203,6 @@ void ServerInit()
 {
 	FootHoldInit();
 	PlayerInit();
-	InitServerSendData();
-}
-
-BOOL IsOkGameStart(int PlayerCount)
-{
-	if (PlayerCount == CLIENT_NUM)
-		return TRUE;
-	return FALSE;
-}
-
-void RecTimer()
-{
-}
-
-void UpdateTimer()
-{
-}
-
-float timeInterpolation()
-{
-	return 0;
-}
-
-void CreateMainGameScene()
-{
 }
 
 void UpdateFootholdbyPlayer(CPlayer* player, vector<Foothold>& Bottom)
@@ -499,13 +455,8 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 	return 0;
 }
 
-void InitServerSendData()
-{
-	//ServerGameData.ServerTime;
-}
-
-void SetCilentData()
-{
+void SetClientData()
+{	
 	copy(Bottom.begin(), Bottom.end(), ServerGameData.Bottom);
 }
 
