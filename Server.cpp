@@ -339,25 +339,11 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 			opcode = 0;
 			retval = send(clientSock, (char*)&opcode, sizeof(short), 0);
 			if (retval == SOCKET_ERROR)
-			{
-				err_display("send()");
 				break;
-			}
-			else if (retval == 0)
-			{
-				break;
-			}
 
 			retval = recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
 			if (retval == SOCKET_ERROR)
-			{
-				err_display("recv()");
 				break;
-			}
-			else if (retval == 0)
-			{
-				break;
-			}
 
 			SettingPlayersMine(threadId);
 
@@ -372,7 +358,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 			(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
 
-			SetCilentData();
+			SetClientData();
 
 			AllPlayerGameOver = IsAllPlayerGameOver();
 			if (AllPlayerGameOver)
@@ -382,28 +368,14 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 			retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
 			if (retval == SOCKET_ERROR)
-			{
-				err_display("send()");
 				break;
-			}
-			else if (retval == 0)
-			{
-				break;
-			}
 		}
 		else
 		{
 			opcode = 2;
 			retval = send(clientSock, (char*)&opcode, sizeof(short), 0);
 			if (retval == SOCKET_ERROR)
-			{
-				err_display("send()");
 				break;
-			}
-			else if (retval == 0)
-			{
-				break;
-			}
 		}
 
 		LeaveCriticalSection(&cs);

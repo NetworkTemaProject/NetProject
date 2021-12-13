@@ -744,7 +744,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		else if (opcode == 1)
 		{
 			recvn(sock, (char*)&CurrentTime, sizeof(int), 0);
-			cout << CurrentTime << endl;
 		}
 		else if (opcode == 2)
 		{
