@@ -10,7 +10,6 @@
 
 #define SERVERPORT 9000
 std::string ServerIP;
-//#define SERVERIP "127.0.0.1"
 
 volatile int custom_counter = 0;
 
@@ -35,7 +34,7 @@ int portnum;
 
 bool Win;
 
-volatile int GameTime = 60;
+volatile int GameTime = 10;
 
 vector<Foothold> Bottom;
 map<DWORD, PlayerMgr*> ClientManager;
@@ -44,7 +43,6 @@ SendGameData ServerGameData;
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
-HANDLE hGameEvent, hTimeEvent;	// 소켓 동기화 작업을 위한 이벤트 핸들 변수
 
 CRITICAL_SECTION cs;
 
@@ -135,13 +133,6 @@ int main(int argc, char* argv[])
 
 	ServerInit();
 
-	hGameEvent = CreateEvent(NULL, FALSE, TRUE, NULL);	// TRUE: 게임 정보 보내기 완료
-	if (hGameEvent == NULL)
-		return 1;
-	hTimeEvent = CreateEvent(NULL, FALSE, FALSE, NULL); // TRUE: 시간 정보 보내기 완료
-	if (hTimeEvent == NULL)
-		return 1;
-
 	int retval;
 
 	// 윈속 초기화
@@ -158,7 +149,6 @@ int main(int argc, char* argv[])
 	SOCKADDR_IN serveraddr;
 	ZeroMemory(&serveraddr, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
-	// serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serveraddr.sin_addr.s_addr = inet_addr(ServerIP.c_str());
 	serveraddr.sin_port = htons(SERVERPORT);
 	retval = bind(listen_sock, (SOCKADDR*)&serveraddr, sizeof(serveraddr));
@@ -174,7 +164,7 @@ int main(int argc, char* argv[])
 	SOCKADDR_IN clientaddr;
 	int addrlen;
 
-	HANDLE hClientThread[2] = {};
+	HANDLE hClientThreads[2] = {};
 	HANDLE hTimeThread = {};
 
 	SOCKET client_socks[CLIENT_NUM] = {};
@@ -200,20 +190,23 @@ int main(int argc, char* argv[])
 	custom_counter = CLIENT_NUM;
 	for (int i = 0; i < CLIENT_NUM; ++i)
 	{
-		hClientThread[i] = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
-		if (hClientThread[i] == NULL)
+		hClientThreads[i] = CreateThread(NULL, 0, ProcessClient, (LPVOID)client_socks[i], 0, NULL);
+		if (hClientThreads[i] == NULL)
 			closesocket(client_socks[i]);
 	}
 
 
 	hTimeThread = CreateThread(NULL, 0, ProcessTime, (LPVOID)client_socks, 0, NULL);
+	if (hTimeThread == NULL)
+	{
+		closesocket(client_socks[0]);
+		closesocket(client_socks[1]);
+	}
 
-	WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
 	if (hTimeThread != NULL)
 		WaitForSingleObject(hTimeThread, INFINITE);
 
-	CloseHandle(hGameEvent);
-	CloseHandle(hTimeEvent);
+	WaitForMultipleObjects(2, hClientThreads, TRUE, INFINITE);
 	
 	DeleteCriticalSection(&cs);
 
@@ -332,16 +325,13 @@ void InitPlayerLocation(CPlayer* p, InputData input)
 	if (input.bLeft) input.bLeft = false;
 	if (input.bRight) input.bRight = false;
 	if (input.bSpace) input.bSpace = false;
-
-	//if ((*p).dz && !input.bUp && !input.bDown) (*p).dz = 0.0f;
-	//if ((*p).dx && !input.bLeft && !input.bRight) (*p).dx = 0.0f;
 }
 
 void FootHoldInit()
 {
 	Bottom.clear();
 	MakeFoothold(Bottom);
-	//DeleteRandomFoothold(Bottom);
+	DeleteRandomFoothold(Bottom);
 }
 
 void PlayerInit()
@@ -370,57 +360,104 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 	send(clientSock, (char*)&custom_counter, sizeof(int), 0);
 
+	DWORD threadId = GetCurrentThreadId();
+
 	SendPlayerData ClientData;
 	int nServerDataLen = sizeof(SendGameData);
 	int nClientDataLen = sizeof(SendPlayerData);
+
+	int retval = 0;
 	short opcode = 0;
+	
+	bool AllPlayerGameOver = false;
 
 	while (1)
 	{
-		WaitForSingleObject(hTimeEvent, INFINITE);
-		DWORD retval = WaitForSingleObject(hFootholdEvent, 25);
+		WaitForSingleObject(hFootholdEvent, 25);
 		EnterCriticalSection(&cs);
-
-		DWORD threadId = GetCurrentThreadId();
 
 		CheckInsertPlayerMgrData(threadId);
 
-		send(clientSock, (char*)&opcode, sizeof(short), 0);
-     
-		retval = recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
-		if (retval == SOCKET_ERROR) 
-			err_display("");
-
-		SettingPlayersMine(threadId);
-
-		if (!(*ClientManager[threadId]).bGameOver)
+		if (!AllPlayerGameOver)
 		{
-			UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
-			(*ClientManager[threadId]).player.Update();
-			InitPlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
-			UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player, Bottom);
-			CheckCollideFoothold(Bottom);
+			opcode = 0;
+			retval = send(clientSock, (char*)&opcode, sizeof(short), 0);
+			if (retval == SOCKET_ERROR)
+			{
+				err_display("send()");
+				break;
+			}
+			else if (retval == 0)
+			{
+				break;
+			}
+
+			retval = recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
+			if (retval == SOCKET_ERROR)
+			{
+				err_display("recv()");
+				break;
+			}
+			else if (retval == 0)
+			{
+				break;
+			}
+
+			SettingPlayersMine(threadId);
+
+			if (!(*ClientManager[threadId]).bGameOver)
+			{
+				UpdatePlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
+				(*ClientManager[threadId]).player.Update();
+				InitPlayerLocation(&(*ClientManager[threadId]).player, ClientData.Input);
+				UpdateFootholdbyPlayer(&(*ClientManager[threadId]).player, Bottom);
+				CheckCollideFoothold(Bottom);
+			}
+
+			(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
+
+			SetCilentData();
+
+			AllPlayerGameOver = IsAllPlayerGameOver();
+			if (AllPlayerGameOver)
+			{
+				CheckGameWin(threadId);
+			}
+
+			retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
+			if (retval == SOCKET_ERROR)
+			{
+				err_display("send()");
+				break;
+			}
+			else if (retval == 0)
+			{
+				break;
+			}
 		}
-
-		(*ClientManager[threadId]).bGameOver = IsGameOver(&(*ClientManager[threadId]).player);
-
-		SetCilentData();
-
-		if (IsAllPlayerGameOver())
+		else
 		{
-			CheckGameWin(threadId);
+			opcode = 2;
+			retval = send(clientSock, (char*)&opcode, sizeof(short), 0);
+			if (retval == SOCKET_ERROR)
+			{
+				err_display("send()");
+				break;
+			}
+			else if (retval == 0)
+			{
+				break;
+			}
 		}
-
-		retval = send(clientSock, (char*)&ServerGameData, nServerDataLen, 0);
-		if (retval == SOCKET_ERROR) 
-			err_display("");
 
 		LeaveCriticalSection(&cs);
-
 		ResetEvent(hFootholdEvent);
-		SetEvent(hGameEvent);
 	}
 
+	closesocket(clientSock);
+	cout << "[TCP 서버] ProcessClient 종료: IP 주소=" << inet_ntoa(clientAddr.sin_addr) << " 포트 번호=" << ntohs(clientAddr.sin_port) << endl;
+	
+	LeaveCriticalSection(&cs);
 	return 0;
 }
 
@@ -435,8 +472,7 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 
 	while (1)
 	{
-		WaitForSingleObject(hGameEvent, INFINITE);
-
+		EnterCriticalSection(&cs);
 		clock_t newTime = clock();
 		if ((newTime - CurrentTime) > CLOCKS_PER_SEC && !IsAllPlayerGameOver())
 		{
@@ -447,11 +483,18 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 				send(clientSocks[i], (char*)&GameTime, sizeof(int), 0);
 			}
 			CurrentTime = newTime;
-			cout << GameTime << endl;
 		}
 
-		SetEvent(hTimeEvent);
+		if (IsAllPlayerGameOver())
+		{
+			break;
+		}
+
+		LeaveCriticalSection(&cs);
 	}
+
+	LeaveCriticalSection(&cs);
+	cout << "[TCP 서버] ProcessTime 종료" << endl;
 
 	return 0;
 }

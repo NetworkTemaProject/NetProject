@@ -58,6 +58,9 @@ clock_t past;
 clock_t present;
 clock_t start;
 
+SOCKET sock;
+
+HANDLE hClientThread;
 HANDLE hDrawEvent;
 CRITICAL_SECTION cs;
 
@@ -188,14 +191,12 @@ SOCKADDR_IN peeraddr;
 SOCKADDR_IN serveraddr;
 SendGameData ServerDatas;
 
-//#define SERVERIP "127.0.0.1"
 #define SERVERPORT 9000
 
 std::string ServerIP;
 
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
 
-void TimerFunc();
 void UpdateSendData();
 bool IsPlayingGame();
 bool IsGameOverState();
@@ -207,6 +208,8 @@ bool bChangeCam = false;
 
 volatile int CurrentTime = 60; // 현재 남은 게임 시간
 bool check = false;
+volatile bool AllPlayerGameOver = false;
+volatile bool PlayerWantQuitGame = false;
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -317,9 +320,21 @@ int main(int argc, char** argv)
 	glutReshapeFunc(Reshape);
 	glutKeyboardFunc(Keyboard);
 	glutKeyboardUpFunc(KeyboardUp);
+
+	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 	glutMainLoop();
 
 	DeleteCriticalSection(&cs);
+
+	if (hClientThread != NULL)
+		WaitForSingleObject(hClientThread, INFINITE);
+
+	// closesocket()
+	closesocket(sock);
+
+	// 윈속 종료
+	WSACleanup();
+
 	return 0;
 }
 
@@ -511,9 +526,17 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 			if (CurrentGameState == static_cast<int>(EGameState::TITLE))
 			{
 				CurrentGameState = static_cast<int>(EGameState::WAITING);
-				CreateThread(NULL, 0, ClientMain, NULL, 0, NULL);
+				hClientThread = CreateThread(NULL, 0, ClientMain, NULL, 0, NULL);
 				glutTimerFunc(50, Timerfunction, 1);
 				hFootholdEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+			}
+			else if (CurrentGameState == static_cast<int>(EGameState::GAMEOVER))
+			{
+				if (AllPlayerGameOver)
+				{
+					PlayerWantQuitGame = true;
+					glutLeaveMainLoop();
+				}
 			}
 			break;
 		}
@@ -657,14 +680,14 @@ void err_display(const char* msg)
 
 DWORD WINAPI ClientMain(LPVOID arg)
 {
-	int retval;
+	int retval = 0;
 
 	WSADATA wsa;
 	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 		return 1;
 
 	// socket()
-	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+	sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock == INVALID_SOCKET)
 		err_quit("socket()");
 
@@ -673,7 +696,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	ZeroMemory(&serveraddr, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
 	serveraddr.sin_addr.s_addr = inet_addr(ServerIP.c_str());
-	//serveraddr.sin_addr.s_addr = inet_addr(SERVERIP);
 	serveraddr.sin_port = htons(SERVERPORT);
 
 	if (CurrentGameState == static_cast<int>(EGameState::WAITING))
@@ -685,6 +707,11 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 	int CurrentPlayerNum = 0;
 	recvn(sock, (char*)&CurrentPlayerNum, sizeof(int), 0);
+	if (retval == SOCKET_ERROR)
+	{
+		err_display("recv()");
+	}
+
 	if (CurrentPlayerNum == CLIENT_NUM)
 	{
 		CurrentGameState = static_cast<int>(EGameState::PLAYING);
@@ -698,7 +725,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		WaitForSingleObject(hDrawEvent, INFINITE);
 		EnterCriticalSection(&cs);
 
-		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
+		WaitForSingleObject(hFootholdEvent, INFINITE);
 
 		short opcode = 0;
 		recvn(sock, (char*)&opcode, sizeof(short), 0);
@@ -722,6 +749,10 @@ DWORD WINAPI ClientMain(LPVOID arg)
 			recvn(sock, (char*)&CurrentTime, sizeof(int), 0);
 			cout << CurrentTime << endl;
 		}
+		else if (opcode == 2)
+		{
+			AllPlayerGameOver = true;
+		}
 
 		if (IsGameOverState())
 		{
@@ -737,13 +768,13 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		SetEvent(hFootholdEvent);
 
 		LeaveCriticalSection(&cs);
+
+		if (PlayerWantQuitGame)
+		{
+			break;
+		}
 	}
 
-	// closesocket()
-	closesocket(sock);
-
-	// 윈속 종료
-	WSACleanup();
 	return 0;
 }
 
