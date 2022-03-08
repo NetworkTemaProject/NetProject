@@ -700,27 +700,16 @@ DWORD WINAPI ClientMain(LPVOID arg)
 
 		DWORD retval = WaitForSingleObject(hFootholdEvent, INFINITE);
 
-		short opcode = 0;
-		recvn(sock, (char*)&opcode, sizeof(short), 0);
+		// myPlayer 송신
+		send(sock, (char*)&myPlayer, nClientDataLen, 0);
+		
+		// ServerGameData 수신
+		recvn(sock, (char*)&ServerDatas, nServerDataLen, 0);
 
-		if (opcode == 0)
+		for (int i = 0; i < CLIENT_NUM; ++i)
 		{
-			// myPlayer 송신
-			send(sock, (char*)&myPlayer, nClientDataLen, 0);
-
-			// ServerGameData 수신
-			recvn(sock, (char*)&ServerDatas, nServerDataLen, 0);
-
-			for (int i = 0; i < CLIENT_NUM; ++i)
-			{
-				if (ServerDatas.PMgr[i].mine) myIndex = i;
-				else otherIndex = i;
-			}
-		}
-		else if (opcode == 1)
-		{
-			recvn(sock, (char*)&CurrentTime, sizeof(int), 0);
-			cout << CurrentTime << endl;
+			if (ServerDatas.PMgr[i].mine) myIndex = i;
+			else otherIndex = i;
 		}
 
 		if (IsGameOverState())

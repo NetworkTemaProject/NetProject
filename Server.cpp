@@ -373,7 +373,6 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	SendPlayerData ClientData;
 	int nServerDataLen = sizeof(SendGameData);
 	int nClientDataLen = sizeof(SendPlayerData);
-	short opcode = 0;
 
 	while (1)
 	{
@@ -384,8 +383,6 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		DWORD threadId = GetCurrentThreadId();
 
 		CheckInsertPlayerMgrData(threadId);
-
-		send(clientSock, (char*)&opcode, sizeof(short), 0);
      
 		retval = recvn(clientSock, (char*)&ClientData, nClientDataLen, 0);
 		if (retval == SOCKET_ERROR) 
@@ -443,7 +440,6 @@ DWORD WINAPI ProcessTime(LPVOID arg)
 			--GameTime;
 			for (int i = 0; i < CLIENT_NUM; ++i)
 			{
-				send(clientSocks[i], (char*)&opcode, sizeof(short), 0);
 				send(clientSocks[i], (char*)&GameTime, sizeof(int), 0);
 			}
 			CurrentTime = newTime;
