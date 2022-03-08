@@ -62,8 +62,8 @@ void InitServerSendData();
 void SetCilentData();
 void FootHoldInit();
 void PlayerInit();
+
 DWORD WINAPI ProcessClient(LPVOID arg);
-DWORD WINAPI ProcessTime(LPVOID arg);
 
 void UpdatePlayerLocation(CPlayer* p, InputData input);
 void InitPlayerLocation(CPlayer* p, InputData input);
@@ -205,8 +205,6 @@ int main(int argc, char* argv[])
 			closesocket(client_socks[i]);
 	}
 
-
-	hTimeThread = CreateThread(NULL, 0, ProcessTime, (LPVOID)client_socks, 0, NULL);
 
 	WaitForMultipleObjects(2, hClientThread, TRUE, INFINITE);
 	if (hTimeThread != NULL)
@@ -416,37 +414,6 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 		ResetEvent(hFootholdEvent);
 		SetEvent(hGameEvent);
-	}
-
-	return 0;
-}
-
-DWORD WINAPI ProcessTime(LPVOID arg)
-{
-	SOCKET* socks = (SOCKET*)arg;
-	SOCKET clientSocks[2] = { socks[0], socks[1] };
-	
-	clock_t CurrentTime = clock();
-	
-	short opcode = 1;
-
-	while (1)
-	{
-		WaitForSingleObject(hGameEvent, INFINITE);
-
-		clock_t newTime = clock();
-		if ((newTime - CurrentTime) > CLOCKS_PER_SEC && !IsAllPlayerGameOver())
-		{
-			--GameTime;
-			for (int i = 0; i < CLIENT_NUM; ++i)
-			{
-				send(clientSocks[i], (char*)&GameTime, sizeof(int), 0);
-			}
-			CurrentTime = newTime;
-			cout << GameTime << endl;
-		}
-
-		SetEvent(hTimeEvent);
 	}
 
 	return 0;
