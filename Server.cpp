@@ -44,7 +44,6 @@ SendGameData ServerGameData;
 
 HANDLE hClientThread; //클라이언트와 데이터 통신을 위한 쓰레드 핸들 변수
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
-HANDLE hGameEvent, hTimeEvent;	// 소켓 동기화 작업을 위한 이벤트 핸들 변수
 
 CRITICAL_SECTION cs;
 
@@ -135,13 +134,6 @@ int main(int argc, char* argv[])
 
 	ServerInit();
 
-	hGameEvent = CreateEvent(NULL, FALSE, TRUE, NULL);	// TRUE: 게임 정보 보내기 완료
-	if (hGameEvent == NULL)
-		return 1;
-	hTimeEvent = CreateEvent(NULL, FALSE, FALSE, NULL); // TRUE: 시간 정보 보내기 완료
-	if (hTimeEvent == NULL)
-		return 1;
-
 	int retval;
 
 	// 윈속 초기화
@@ -210,9 +202,6 @@ int main(int argc, char* argv[])
 	if (hTimeThread != NULL)
 		WaitForSingleObject(hTimeThread, INFINITE);
 
-	CloseHandle(hGameEvent);
-	CloseHandle(hTimeEvent);
-	
 	DeleteCriticalSection(&cs);
 
 	// closesocket()
@@ -374,7 +363,6 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 
 	while (1)
 	{
-		WaitForSingleObject(hTimeEvent, INFINITE);
 		DWORD retval = WaitForSingleObject(hFootholdEvent, 25);
 		EnterCriticalSection(&cs);
 
@@ -413,7 +401,6 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 		LeaveCriticalSection(&cs);
 
 		ResetEvent(hFootholdEvent);
-		SetEvent(hGameEvent);
 	}
 
 	return 0;
