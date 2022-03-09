@@ -179,6 +179,7 @@ struct SendGameData
 {
 	PlayerMgr PMgr[CLIENT_NUM];
 	Foothold Bottom[N * N * N];
+	volatile int ServerTime;
 };
 
 SendPlayerData myPlayer;
@@ -706,6 +707,7 @@ DWORD WINAPI ClientMain(LPVOID arg)
 		// ServerGameData 수신
 		recvn(sock, (char*)&ServerDatas, nServerDataLen, 0);
 
+		CurrentTime = ServerDatas.ServerTime;
 		for (int i = 0; i < CLIENT_NUM; ++i)
 		{
 			if (ServerDatas.PMgr[i].mine) myIndex = i;

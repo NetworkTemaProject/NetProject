@@ -22,6 +22,7 @@ struct SendGameData
 {
 	PlayerMgr PMgrs[CLIENT_NUM];
 	Foothold Bottom[N * N * N];
+	volatile int ServerTime;
 };
 
 bool IsCollisionPandF;
@@ -69,6 +70,8 @@ void InitPlayerLocation(CPlayer* p, InputData input);
 void UpdateFootholdbyPlayer(CPlayer* player,vector<Foothold>& Bottom);
 void SettingPlayersMine(DWORD ThreadId);
 void CheckInsertPlayerMgrData(DWORD ThreadId);
+
+void UpdateGameTime(clock_t& CurrentTime);
 
 bool IsGameOver(CPlayer* player);
 bool IsAllPlayerGameOver();
@@ -361,6 +364,8 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 	int nServerDataLen = sizeof(SendGameData);
 	int nClientDataLen = sizeof(SendPlayerData);
 
+	clock_t CurrentTime = clock();
+
 	while (1)
 	{
 		DWORD retval = WaitForSingleObject(hFootholdEvent, 25);
@@ -375,6 +380,7 @@ DWORD __stdcall ProcessClient(LPVOID arg)
 			err_display("");
 
 		SettingPlayersMine(threadId);
+		UpdateGameTime(CurrentTime);
 
 		if (!(*ClientManager[threadId]).bGameOver)
 		{
@@ -480,4 +486,15 @@ void CheckGameWin(DWORD ThreadId)
 	(*ClientManager[ThreadId]).Win = (ThreadId == tempData->PMgrs[0].threadId) ? true : false;
 
 	delete tempData;
+}
+
+void UpdateGameTime(clock_t& CurrentTime)
+{
+	clock_t newTime = clock();
+	if ((newTime - CurrentTime) > CLOCKS_PER_SEC && !IsAllPlayerGameOver())
+	{
+		--GameTime;
+		CurrentTime = newTime;
+	}
+	ServerGameData.ServerTime = GameTime;
 }
