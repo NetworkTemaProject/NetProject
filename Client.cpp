@@ -14,8 +14,6 @@ GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int h);
 GLvoid Keyboard(unsigned char key, int x, int y);
 GLvoid KeyboardUp(unsigned char key, int x, int y);
-//void Mouse(int button, int state, int x, int y);
-//void MouseMove(GLint x, GLint y);
 void Timerfunction(int value);
 void make_vertexShader();
 void make_fragmentShader();
@@ -23,7 +21,6 @@ void make_fragmentShader();
 void renderBitmapCharacher(float, float, float, void*, char*);
 void Print_word(float, float, float, float, int, char*);
 void Print_GameState();	// 현재 게임 상태에 따라 화면에 Title String, Waiting String, over을 출력하는 함수 
-
 
 void err_quit(const char* msg); // 소켓 함수 오류 출력 후 종료
 void err_display(const char* msg); // 소켓 함수 오류 출력
@@ -185,7 +182,6 @@ struct SendGameData
 SendPlayerData myPlayer;
 PlayerMgr players[CLIENT_NUM];
 
-SOCKADDR_IN peeraddr;
 SOCKADDR_IN serveraddr;
 SendGameData ServerDatas;
 
@@ -197,8 +193,6 @@ std::string ServerIP;
 HANDLE hFootholdEvent; //발판 동기화 작업을 위한 이벤트 핸들 변수
 
 void TimerFunc();
-void UpdateSendData();
-bool IsPlayingGame();
 bool IsGameOverState();
 bool IsChangeCamera();
 int myIndex = -1;
@@ -586,7 +580,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		}
 		case 'v':
 		case 'V':
-			if (IsChangeCamera() || bChangeCam) bChangeCam != bChangeCam;
+			if (IsChangeCamera() || bChangeCam) bChangeCam = !bChangeCam;
 			break;
 	}
 
@@ -736,16 +730,6 @@ DWORD WINAPI ClientMain(LPVOID arg)
 	// 윈속 종료
 	WSACleanup();
 	return 0;
-}
-
-void UpdateSendData()
-{
-
-}
-
-bool IsPlayingGame()
-{
-	return false;
 }
 
 bool IsGameOverState()
