@@ -457,13 +457,10 @@ bool IsAllPlayerGameOver()
 {
 	map<DWORD, PlayerMgr*>::iterator iter = ClientManager.begin();
 	
-	if (iter != ClientManager.end())
+	for (iter; iter != ClientManager.end(); ++iter)
 	{
-		for (iter; iter != ClientManager.end(); ++iter)
-		{
-			if (!iter->second->bGameOver)
-				return false;
-		}
+		if (!iter->second->bGameOver)
+			return false;
 	}
 
 	return true;
