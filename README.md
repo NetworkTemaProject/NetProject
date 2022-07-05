@@ -1,6 +1,6 @@
-# NetProject
-네트워크 게임 프로그래밍 팀프로젝트
+# 프로젝트 소개
+    네트워크 게임 프로그래밍 팀프로젝트
+    OpenGL·TCP 프로토콜을 기반으로 한 게임 개발 프로젝트입니다.
+    상세 역할분담·high-level 디자인·개발일정은 "docs/프로젝트_개발보고서.pdf"에 기재하였습니다.
 
-1. 일정표 - https://kpuackr-my.sharepoint.com/:x:/g/personal/yereube_kpu_ac_kr/EaE_b0NCA-pMjXO--YpRjZUBK-mBNLg-ljo0J_p10OLuoA?e=1J1Edd
-
-2. 계획서 - https://kpuackr-my.sharepoint.com/:w:/g/personal/yereube_kpu_ac_kr/ETHTDIaZrh1DuwBVxNusbSsBwK6LIui6nEFlJBXvH9mdxA?e=iNmitp
+    
